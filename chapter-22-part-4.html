@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 22 · Part 4 — Interpret the measurements and complete the demonstration · Modern Language Models in C</title>
+<meta name="description" content="A C decoder laboratory: explicit tensor layouts, manual gradients, small-model training, cached inference, and exact tiled attention.">
+<link rel="canonical" href="https://25d-228.github.io/gpt-c/chapter-22-part-4.html">
+<link rel="stylesheet" href="assets/code-light.css">
+<link rel="stylesheet" href="assets/course.css">
+<script>window.MathJax = {startup: {typeset: false}, options: {enableMenu: false}, svg: {fontCache: "local"}};</script>
+<script defer src="assets/vendor/tex-svg.js"></script>
+<script defer src="assets/course.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to chapter</a>
+<header class="topbar"><a class="brand" href="index.html"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 7C10 3 5 4 2 5v17c4-2 8-1 12 2m0-17c4-4 9-3 12-2v17c-4-2-8-1-12 2V7Z"/></svg><span>Modern Language Models in C</span></a>
+<div class="header-actions"><a class="desktop-link" href="index.html">Overview</a><a class="desktop-link" href="chapter-01.html">Chapters</a><a class="desktop-link" href="https://github.com/25d-228/gpt-c">Repository</a><button id="menu-toggle" type="button" aria-expanded="false" aria-controls="chapter-nav">Contents</button></div></header>
+<div class="book-layout">
+<aside class="sidebar" id="chapter-nav"><h2 class="sidebar-title">Contents</h2>
+<label for="chapter-filter">Find a chapter</label><input id="chapter-filter" type="search" placeholder="Search chapter titles…" autocomplete="off">
+<nav aria-label="Chapters"><ol><li><a href="index.html"><span class="chapter-label">Roadmap</span><span>Decoder Laboratory in C</span></a></li><li><a href="chapter-01.html"><span class="chapter-label">Chapter 1</span><span>Native C builds and a debuggable numerical program</span></a></li><li><a href="chapter-02.html"><span class="chapter-label">Chapter 2</span><span>Owned buffers, borrowed views, and failure cleanup</span></a></li><li><a href="chapter-03.html"><span class="chapter-label">Chapter 3</span><span>Floating-point arithmetic and numerical derivatives</span></a></li><li><a href="chapter-04.html"><span class="chapter-label">Chapter 4</span><span>Tensor layouts and reference matrix products</span></a></li><li><a href="chapter-05.html"><span class="chapter-label">Chapter 5 · Part 1</span><span>Embeddings, stable loss, and elementary backward passes</span></a></li><li><a href="chapter-05-part-2.html"><span class="chapter-label">Chapter 5 · Part 2</span><span>Checking gradients and numerical failures</span></a></li><li><a href="chapter-06.html"><span class="chapter-label">Chapter 6 · Part 1</span><span>Blocked C kernels and meaningful timing</span></a></li><li><a href="chapter-06-part-2.html"><span class="chapter-label">Chapter 6 · Part 2</span><span>Timing complete kernel calls</span></a></li><li><a href="chapter-07.html"><span class="chapter-label">Chapter 7 · Part 1</span><span>RMSNorm and residual gradient paths</span></a></li><li><a href="chapter-07-part-2.html"><span class="chapter-label">Chapter 7 · Part 2</span><span>Checking normalization and residual graphs</span></a></li><li><a href="chapter-08.html"><span class="chapter-label">Chapter 8 · Part 1</span><span>SwiGLU and the two-branch backward pass</span></a></li><li><a href="chapter-08-part-2.html"><span class="chapter-label">Chapter 8 · Part 2</span><span>Checking feed-forward branches and saved state</span></a></li><li><a href="chapter-09.html"><span class="chapter-label">Chapter 9 · Part 1</span><span>Rotary positions as explicit coordinate transformations</span></a></li><li><a href="chapter-09-part-2.html"><span class="chapter-label">Chapter 9 · Part 2</span><span>Checking coordinate conventions and absolute positions</span></a></li><li><a href="chapter-10.html"><span class="chapter-label">Chapter 10 · Part 1</span><span>Causal grouped-query attention, forward</span></a></li><li><a href="chapter-10-part-2.html"><span class="chapter-label">Chapter 10 · Part 2</span><span>Checking causal attention and shared heads</span></a></li><li><a href="chapter-11.html"><span class="chapter-label">Chapter 11 · Part 1</span><span>Attention backward and shared-head accumulation</span></a></li><li><a href="chapter-11-part-2.html"><span class="chapter-label">Chapter 11 · Part 2</span><span>Checking attention gradients and accumulation</span></a></li><li><a href="chapter-12.html"><span class="chapter-label">Chapter 12 · Part 1</span><span>Assemble and differentiate the complete decoder</span></a></li><li><a href="chapter-12-part-2.html"><span class="chapter-label">Chapter 12 · Part 2</span><span>Training tape and reverse scheduling</span></a></li><li><a href="chapter-12-part-3.html"><span class="chapter-label">Chapter 12 · Part 3</span><span>Checking the assembled model</span></a></li><li><a href="chapter-13.html"><span class="chapter-label">Chapter 13 · Part 1</span><span>Byte text, shifted targets, and bounded data preparation</span></a></li><li><a href="chapter-13-part-2.html"><span class="chapter-label">Chapter 13 · Part 2</span><span>Bounded preparation and end-to-end checks</span></a></li><li><a href="chapter-14.html"><span class="chapter-label">Chapter 14 · Part 1</span><span>AdamW, accumulation, and gradient clipping</span></a></li><li><a href="chapter-14-part-2.html"><span class="chapter-label">Chapter 14 · Part 2</span><span>Checking optimizer state and equivalent batches</span></a></li><li><a href="chapter-15.html"><span class="chapter-label">Chapter 15 · Part 1</span><span>Train, evaluate, checkpoint, and resume</span></a></li><li><a href="chapter-15-part-2.html"><span class="chapter-label">Chapter 15 · Part 2</span><span>Versioned checkpoints and coherent restoration</span></a></li><li><a href="chapter-15-part-3.html"><span class="chapter-label">Chapter 15 · Part 3</span><span>Running the training application</span></a></li><li><a href="chapter-15-part-4.html"><span class="chapter-label">Chapter 15 · Part 4</span><span>Checking continuation and failure recovery</span></a></li><li><a href="chapter-16.html"><span class="chapter-label">Chapter 16 · Part 1</span><span>Inference workspaces and token sampling</span></a></li><li><a href="chapter-16-part-2.html"><span class="chapter-label">Chapter 16 · Part 2</span><span>Weight-only loading and categorical selection</span></a></li><li><a href="chapter-16-part-3.html"><span class="chapter-label">Chapter 16 · Part 3</span><span>Full-prefix generation and executable checks</span></a></li><li><a href="chapter-17.html"><span class="chapter-label">Chapter 17 · Part 1</span><span>Prefill and incremental key/value caching</span></a></li><li><a href="chapter-17-part-2.html"><span class="chapter-label">Chapter 17 · Part 2</span><span>Computing and committing a cached step</span></a></li><li><a href="chapter-17-part-3.html"><span class="chapter-label">Chapter 17 · Part 3</span><span>Checking cache equivalence and failure recovery</span></a></li><li><a href="chapter-18.html"><span class="chapter-label">Chapter 18 · Part 1</span><span>Online normalization and tiled attention forward</span></a></li><li><a href="chapter-18-part-2.html"><span class="chapter-label">Chapter 18 · Part 2</span><span>Integrating bounded attention into inference</span></a></li><li><a href="chapter-18-part-3.html"><span class="chapter-label">Chapter 18 · Part 3</span><span>Checking tiled outputs, storage, and generation</span></a></li><li><a href="chapter-19.html"><span class="chapter-label">Chapter 19 · Part 1</span><span>Recomputed tiled backward without a quadratic tape</span></a></li><li><a href="chapter-19-part-2.html"><span class="chapter-label">Chapter 19 · Part 2</span><span>A linear training tape and paired dispatch</span></a></li><li><a href="chapter-19-part-3.html"><span class="chapter-label">Chapter 19 · Part 3</span><span>Training policy and versioned continuation</span></a></li><li><a href="chapter-19-part-4.html"><span class="chapter-label">Chapter 19 · Part 4</span><span>Checking tiled core and sublayer gradients</span></a></li><li><a href="chapter-19-part-5.html"><span class="chapter-label">Chapter 19 · Part 5</span><span>Whole-model, training, and memory checks</span></a></li><li><a href="chapter-20.html"><span class="chapter-label">Chapter 20 · Part 1</span><span>Import and validate pretrained weights</span></a></li><li><a href="chapter-20-part-2.html"><span class="chapter-label">Chapter 20 · Part 2</span><span>Bounded C loading and imported position limits</span></a></li><li><a href="chapter-20-part-3.html"><span class="chapter-label">Chapter 20 · Part 3</span><span>Executable import fixtures and the C inspection path</span></a></li><li><a href="chapter-20-part-4.html"><span class="chapter-label">Chapter 20 · Part 4</span><span>Cross-language validation and separate memory measurements</span></a></li><li><a href="chapter-21.html"><span class="chapter-label">Chapter 21 · Part 1</span><span>Tokenizer boundaries and pretrained reference agreement</span></a></li><li><a href="chapter-21-part-2.html"><span class="chapter-label">Chapter 21 · Part 2</span><span>Observing C execution and selecting vocabulary IDs</span></a></li><li><a href="chapter-21-part-3.html"><span class="chapter-label">Chapter 21 · Part 3</span><span>Independent eager equations and numerical disagreement</span></a></li><li><a href="chapter-21-part-4.html"><span class="chapter-label">Chapter 21 · Part 4</span><span>Executable checks and the real-asset workflow</span></a></li><li><a href="chapter-22.html"><span class="chapter-label">Chapter 22 · Part 1</span><span>End-to-end demonstration and measured tradeoffs</span></a></li><li><a href="chapter-22-part-2.html"><span class="chapter-label">Chapter 22 · Part 2</span><span>Measure forward/backward pairs and test the harness</span></a></li><li><a href="chapter-22-part-3.html"><span class="chapter-label">Chapter 22 · Part 3</span><span>A repeatable training, restart, and generation run</span></a></li><li><a href="chapter-22-part-4.html" aria-current="page"><span class="chapter-label">Chapter 22 · Part 4</span><span>Interpret the measurements and complete the demonstration</span></a></li></ol></nav>
+<p class="sidebar-note">A C decoder laboratory: explicit tensor layouts, manual gradients, small-model training, cached inference, and exact tiled attention.</p></aside>
+<main id="main-content" tabindex="-1">
+<div class="breadcrumb"><a href="index.html">Modern Language Models in C</a><span aria-hidden="true">/</span><span>Chapter 22 · Part 4</span></div>
+<div class="page-actions"><a href="https://github.com/25d-228/gpt-c/issues/69">Read on GitHub</a><a href="source/chapter-22-part-4.md">Markdown</a></div>
+<details class="mobile-toc"><summary>In this chapter</summary><ul><li class="toc-h2"><a href="#run-the-already-prepared-genuine-assets">Run the already prepared genuine assets</a></li><li class="toc-h2"><a href="#keep-a-concise-run-guide-beside-the-implementation">Keep a concise run guide beside the implementation</a></li><li class="toc-h2"><a href="#observed-byte-model-learning-and-continuation">Observed byte-model learning and continuation</a></li><li class="toc-h2"><a href="#matrix-blocking-report-the-complete-call">Matrix blocking: report the complete call</a></li><li class="toc-h2"><a href="#prefill-and-subsequent-inputs-are-different-phases">Prefill and subsequent inputs are different phases</a></li><li class="toc-h2"><a href="#tiled-backward-a-memory-change-can-cost-time">Tiled backward: a memory change can cost time</a></li><li class="toc-h2"><a href="#run-realistically-on-the-16-gb-m4-target">Run realistically on the 16 GB M4 target</a></li><li class="toc-h2"><a href="#diagnose-the-demonstration-not-only-the-model">Diagnose the demonstration, not only the model</a></li><li class="toc-h2"><a href="#what-the-completed-engine-exposes">What the completed engine exposes</a></li><li class="toc-h2"><a href="#primary-references-used-in-this-chapter">Primary references used in this chapter</a></li></ul></details>
+<p id="math-status" hidden>Some mathematics could not be rendered. The original notation remains visible.</p>
+<article><h1 id="chapter-22-part-4-interpret-the-measurements-and-complete-the-demonstration">Chapter 22, Part 4 — Interpret the measurements and complete the demonstration</h1>
+<p>The byte-model demonstration in <a href="https://25d-228.github.io/gpt-c/chapter-22-part-3.html">Part 3</a> runs without a remote service. The pretrained demonstration has a different boundary: it requires actual pinned model and tokenizer assets. Keep those two results distinct. Synthetic files test representation and equations; they cannot establish that an external model's complete inventory or tokenizer matches our interpretation.</p>
+<h2 id="run-the-already-prepared-genuine-assets">Run the already prepared genuine assets</h2>
+<p>Use the local source, converted, and tokenizer directories produced by <a href="https://25d-228.github.io/gpt-c/chapter-20.html">Chapter 20</a> and <a href="https://25d-228.github.io/gpt-c/chapter-21.html">Chapter 21</a>. Do not substitute fixture files for a missing download. Activate the compatible Python reference/tokenizer environment described there. The script below performs no download and makes no network retry.</p>
+<p>The three input directories have different jobs. <code>SOURCE</code> contains original <code>config.json</code> and <code>model.safetensors</code> for the independent CPU FP32 equations. <code>CONVERTED</code> contains <code>model.cfg</code>, <code>weights.dlw</code>, and the converter's <code>source.json</code> for C. <code>TOKENIZER</code> contains the explicitly acquired tokenizer and its own provenance record. Matching declared revisions detects an accidental fixture or mixed acquisition; it does not authenticate arbitrary local bytes.</p>
+<p>The driver first round-trips an ordinary UTF-8 prompt through the actual tokenizer with the earlier no-automatic-special-token policy. It then compares all intermediate values for full and tiled C execution. C selects four greedy continuation IDs, stopping on newly selected EOS ID zero. Python only decodes those selected IDs. Finally, all three C strategies and the independent equations replay the same generated prefixes. The reference is the explicit Chapter 21 eager implementation, not an invocation of an official transformer model class.</p>
+<p>The <a href="https://huggingface.co/HuggingFaceTB/SmolLM2-135M/raw/93efa2f097d58c2a74874c7e644dbc9b0cee75a2/config.json">selected model configuration</a> declares vocabulary size 49,152, 30 blocks, width 576, nine query heads, three key/value heads, feed-forward width 1,536, and EOS ID zero. These are the converter's supported geometry, not values inferred from a model's name. Keep the pinned revision from the previous chapters; do not silently replace it with a moving default branch.</p>
+<p>Create <code>scripts/run_pretrained_demo.sh</code>:</p>
+<figure class="code-block"><figcaption><span class="code-title">scripts/run_pretrained_demo.sh</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="ch">#!/bin/sh</span>
+<span class="c1"># Existing pinned assets only; model execution and token selection stay in C.</span>
+<span class="nb">set</span><span class="w"> </span>-eu
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="nv">$#</span><span class="s2">"</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s1">'usage: sh scripts/run_pretrained_demo.sh SOURCE CONVERTED TOKENIZER NEW_OUTPUT'</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="k">fi</span>
+<span class="nv">root</span><span class="o">=</span><span class="k">$(</span><span class="nv">CDPATH</span><span class="o">=</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>dirname<span class="w"> </span><span class="s2">"</span><span class="nv">$0</span><span class="s2">"</span><span class="k">)</span><span class="s2">/.."</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">pwd</span><span class="k">)</span>
+<span class="nv">source</span><span class="o">=</span><span class="k">$(</span><span class="nv">CDPATH</span><span class="o">=</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="nv">$1</span><span class="s2">"</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">pwd</span><span class="k">)</span>
+<span class="nv">converted</span><span class="o">=</span><span class="k">$(</span><span class="nv">CDPATH</span><span class="o">=</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="nv">$2</span><span class="s2">"</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">pwd</span><span class="k">)</span>
+<span class="nv">tokenizer</span><span class="o">=</span><span class="k">$(</span><span class="nv">CDPATH</span><span class="o">=</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="nv">$3</span><span class="s2">"</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">pwd</span><span class="k">)</span>
+<span class="k">case</span><span class="w"> </span><span class="s2">"</span><span class="nv">$4</span><span class="s2">"</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>/*<span class="o">)</span><span class="w"> </span><span class="nv">out</span><span class="o">=</span><span class="nv">$4</span><span class="w"> </span><span class="p">;;</span><span class="w"> </span>*<span class="o">)</span><span class="w"> </span><span class="nv">out</span><span class="o">=</span><span class="nv">$PWD</span>/<span class="nv">$4</span><span class="w"> </span><span class="p">;;</span><span class="w"> </span><span class="k">esac</span>
+mkdir<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">"</span>
+<span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="nv">$root</span><span class="s2">"</span>
+python3<span class="w"> </span>-<span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$tokenizer</span><span class="s2">"</span><span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/assets.txt"</span><span class="w"> </span><span class="s">&lt;&lt;'PY'</span>
+<span class="s">import json, sys</span>
+<span class="s">from pathlib import Path</span>
+<span class="s">sys.path.insert(0, 'scripts')</span>
+<span class="s">from export_smollm2 import MODEL, REVISION</span>
+<span class="s">weights = json.loads((Path(sys.argv[1])/'source.json').read_text())</span>
+<span class="s">tokens = json.loads((Path(sys.argv[2])/'source.json').read_text())</span>
+<span class="s">if (weights.get('model_profile') != MODEL or weights.get('expected_revision') != REVISION</span>
+<span class="s">        or tokens.get('model') != MODEL or tokens.get('revision') != REVISION):</span>
+<span class="s">    raise SystemExit('asset provenance must name the selected model/revision, not a fixture')</span>
+<span class="s">print(json.dumps(dict(weights=weights, tokenizer=tokens), indent=2))</span>
+<span class="s">print('Provenance records are declarations, not authentication of the file contents.')</span>
+<span class="s">PY</span>
+make<span class="w"> </span>-B<span class="w"> </span><span class="nv">CC</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">CC</span><span class="k">:-</span><span class="nv">xcrun</span><span class="p"> clang</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>build/release/compare<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/build.log"</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<span class="o">{</span>
+<span class="w">    </span>date<span class="w"> </span>-u<span class="w"> </span><span class="s1">'+UTC %Y-%m-%dT%H:%M:%SZ'</span>
+<span class="w">    </span>uname<span class="w"> </span>-a
+<span class="w">    </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import sys, torch, safetensors, transformers, tokenizers; print(sys.version); print("torch",torch.__version__,"safetensors",safetensors.__version__,"transformers",transformers.__version__,"tokenizers",tokenizers.__version__)'</span>
+<span class="o">}</span><span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/environment.txt"</span>
+<span class="nb">printf</span><span class="w"> </span><span class="s1">'Once upon a time,'</span><span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prompt.utf8"</span>
+python3<span class="w"> </span>scripts/tokenize.py<span class="w"> </span>encode<span class="w"> </span><span class="s2">"</span><span class="nv">$tokenizer</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prompt.utf8"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prompt.ids"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/tokenization.json"</span>
+python3<span class="w"> </span>scripts/tokenize.py<span class="w"> </span>decode<span class="w"> </span><span class="s2">"</span><span class="nv">$tokenizer</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prompt.ids"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/roundtrip.utf8"</span>
+cmp<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prompt.utf8"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/roundtrip.utf8"</span>
+<span class="nv">P</span><span class="o">=</span><span class="k">$(</span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import sys; sys.path.insert(0,"scripts"); from probe_io import read_ids; p=len(read_ids(sys.argv[1])[1]); assert 0&lt;p&lt;=16, "trace prompt must contain 1..16 IDs"; print(p)'</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prompt.ids"</span><span class="k">)</span>
+<span class="nv">compare</span><span class="o">=</span>./build/release/compare
+python3<span class="w"> </span>scripts/reference_smollm2.py<span class="w"> </span><span class="s2">"</span><span class="nv">$source</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prompt.ids"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/reference.jsonl"</span>
+<span class="k">for</span><span class="w"> </span>mode<span class="w"> </span><span class="k">in</span><span class="w"> </span>full<span class="w"> </span>tiled<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="s2">"</span><span class="nv">$compare</span><span class="s2">"</span><span class="w"> </span>pretrained<span class="w"> </span>trace<span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/model.cfg"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/weights.dlw"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prompt.ids"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/c-</span><span class="nv">$mode</span><span class="s2">.jsonl"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$mode</span><span class="s2">"</span><span class="w"> </span>blocked
+<span class="w">    </span>python3<span class="w"> </span>scripts/compare_traces.py<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/c-</span><span class="nv">$mode</span><span class="s2">.jsonl"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/reference.jsonl"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--atol<span class="w"> </span>1e-4<span class="w"> </span>--rtol<span class="w"> </span>2e-4<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/trace-</span><span class="nv">$mode</span><span class="s2">.txt"</span>
+<span class="k">done</span>
+<span class="s2">"</span><span class="nv">$compare</span><span class="s2">"</span><span class="w"> </span>pretrained<span class="w"> </span>generate<span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/model.cfg"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/weights.dlw"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prompt.ids"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/transcript.ids"</span><span class="w"> </span>cache<span class="w"> </span>blocked<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">0</span>
+python3<span class="w"> </span>scripts/tokenize.py<span class="w"> </span>decode<span class="w"> </span><span class="s2">"</span><span class="nv">$tokenizer</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/transcript.ids"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/transcript.utf8"</span>
+python3<span class="w"> </span>scripts/reference_smollm2.py<span class="w"> </span><span class="s2">"</span><span class="nv">$source</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/transcript.ids"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/reference-prefix.jsonl"</span><span class="w"> </span>--mode<span class="w"> </span>prefix<span class="w"> </span>--start<span class="w"> </span><span class="s2">"</span><span class="nv">$P</span><span class="s2">"</span>
+<span class="k">for</span><span class="w"> </span>mode<span class="w"> </span><span class="k">in</span><span class="w"> </span>full<span class="w"> </span>tiled<span class="w"> </span>cache<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="s2">"</span><span class="nv">$compare</span><span class="s2">"</span><span class="w"> </span>pretrained<span class="w"> </span>prefix<span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/model.cfg"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/weights.dlw"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/transcript.ids"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prefix-</span><span class="nv">$mode</span><span class="s2">.jsonl"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$mode</span><span class="s2">"</span><span class="w"> </span>blocked<span class="w"> </span><span class="s2">"</span><span class="nv">$P</span><span class="s2">"</span>
+<span class="w">    </span>python3<span class="w"> </span>scripts/compare_traces.py<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prefix-</span><span class="nv">$mode</span><span class="s2">.jsonl"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/reference-prefix.jsonl"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--atol<span class="w"> </span>1e-4<span class="w"> </span>--rtol<span class="w"> </span>2e-4<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/prefix-</span><span class="nv">$mode</span><span class="s2">.txt"</span>
+<span class="w">    </span><span class="c1"># Deterministic synthetic IDs for timing, not a claim about generated text.</span>
+<span class="w">    </span><span class="s2">"</span><span class="nv">$compare</span><span class="s2">"</span><span class="w"> </span>model<span class="w"> </span>check<span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/model.cfg"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/weights.dlw"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span><span class="s2">"</span><span class="nv">$mode</span><span class="s2">"</span><span class="w"> </span>blocked<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">32</span><span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/measure-</span><span class="nv">$mode</span><span class="s2">-check.txt"</span>
+<span class="w">    </span><span class="s2">"</span><span class="nv">$compare</span><span class="s2">"</span><span class="w"> </span>model<span class="w"> </span>measure<span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/model.cfg"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$converted</span><span class="s2">/weights.dlw"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span><span class="s2">"</span><span class="nv">$mode</span><span class="s2">"</span><span class="w"> </span>blocked<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">32</span><span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/measure-</span><span class="nv">$mode</span><span class="s2">.txt"</span>
+<span class="k">done</span>
+<span class="nb">printf</span><span class="w"> </span><span class="s1">'%s\n'</span><span class="w"> </span><span class="s1">'All requested real-asset commands exited successfully; inspect errors, margins and output.'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$out</span><span class="s2">/completed.txt"</span>
+</code></pre></figure>
+<p>The first failed command stops the script. A new output directory and its partial logs remain for diagnosis; only the last successful command creates <code>completed.txt</code>. A missing dependency, failed trace comparison, or real-data incompatibility is not permission to enlarge tolerances until it passes. Read the first divergent stage, check tokenizer IDs and configuration, then inspect the corresponding C coordinates.</p>
+<p>A fixed <code>1e-4 + 2e-4|reference|</code> bound is a diagnostic target, not a proven upper bound for this complete real model. Maximum error, argmax agreement, and the gap between the two largest logits answer different questions. Near ties can change the selected ID inside the numerical bound. Matching tokens alone can hide a wrong logit vector. The fixed-prefix comparison deliberately does not let those different choices change its input.</p>
+<p>The last measurements use deterministic IDs with four prompt positions and two subsequent consumed inputs. They are small computational workloads, not generated prose. Every check and measurement is a separate process, and Python reference execution has finished before the corresponding C timing starts. This limits co-resident storage and avoids assigning a Python process's peak to the C engine.</p>
+<p><strong>Executed status for this course:</strong> real pretrained weights and tokenizer files could not be acquired in the available runtime because DNS resolution failed; Transformers/tokenizers were not installed. This driver was syntax-checked, and its rejection of fixture provenance was executed. Its genuine tokenization, full-model reference agreement, continuation, and timing commands were <strong>not executed</strong>. Chapters 20–21's synthetic import and independent-equation checks did execute. Nothing in the tables below is a genuine-pretrained result.</p>
+<h2 id="keep-a-concise-run-guide-beside-the-implementation">Keep a concise run guide beside the implementation</h2>
+<p>Create <code>runs/README.md</code>. This is documentation, not a generated result directory. The shell drivers create each result in a fresh child directory. Model weights and result files stay on the learner's local disk/implementation branch, rather than becoming book assets.</p>
+<figure class="code-block"><figcaption><span class="code-title">runs/README.md</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="gh"># Local runs</span>
+
+Run from the learner source root. All output directories must be new. Keep runs,
+assets, weights, traces and binaries on the learner branch/local disk, not on the
+book branch. The scripts do not download assets, retry commands, or delete failed
+runs. A failed process leaves its log for diagnosis; it is not a completed result.
+
+<span class="sb">```sh</span>
+make<span class="w"> </span><span class="nb">test</span>
+make<span class="w"> </span>test-assets<span class="w"> </span>test-import-assets<span class="w"> </span>test-reference<span class="w"> </span>test-measure
+mkdir<span class="w"> </span>-p<span class="w"> </span>runs
+sh<span class="w"> </span>scripts/run_demo.sh<span class="w"> </span>runs/pilot-01
+<span class="sb">```</span>
+
+The compiler defaults to <span class="sb">`xcrun clang`</span> on the Mac. An equivalent compiler can be
+selected with <span class="sb">`CC=clang`</span>. The demo defaults to the 29,856-parameter pilot, 160
+updates, one microbatch/update and five repetitions per timing sample. It records
+actual build commands, machine information, full/tiled losses by processed targets,
+split/uninterrupted checkpoint equality, escaped continuations, all-logit/gradient
+checks, and separate-process timings and peak resident memory.
+
+For a fast smoke run use <span class="sb">`DEMO_UPDATES=2 DEMO_REPS=1`</span>. For the 2,885,888-parameter
+configuration use <span class="sb">`DEMO_CONFIG=configs/byte-small.conf`</span>; start with
+<span class="sb">`DEMO_UPDATES=8 DEMO_REPS=1`</span> and inspect actual CPU cost before scaling. The full demo
+performs duplicate training for restart checks and many prefix/gradient comparisons;
+it is more work than one training run. Reading and unattended computation are not
+implementation hours. Repetition counts are positive decimals without leading zeros.
+
+<span class="sb">`model ... check`</span> and <span class="sb">`training ... check`</span> intentionally do not report timing/RSS:
+reference arrays coexist. The following <span class="sb">`measure`</span> invocation starts another process
+and constructs only the selected implementation. Keep capacities, IDs, backends,
+tiles, build flags and repetitions aligned between each check/measurement pair.
+
+<span class="sb">```sh</span>
+./build/release/compare<span class="w"> </span>model<span class="w"> </span>check<span class="w"> </span>configs/byte-pilot.conf<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>runs/pilot-01/full-whole.ckpt<span class="w"> </span>cache<span class="w"> </span>blocked<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">32</span>
+./build/release/compare<span class="w"> </span>model<span class="w"> </span>measure<span class="w"> </span>configs/byte-pilot.conf<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>runs/pilot-01/full-whole.ckpt<span class="w"> </span>cache<span class="w"> </span>blocked<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">32</span>
+./build/release/compare<span class="w"> </span>training<span class="w"> </span>check<span class="w"> </span>configs/byte-pilot.conf<span class="w"> </span>tiled<span class="w"> </span>blocked<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">32</span>
+./build/release/compare<span class="w"> </span>training<span class="w"> </span>measure<span class="w"> </span>configs/byte-pilot.conf<span class="w"> </span>tiled<span class="w"> </span>blocked<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">32</span>
+<span class="sb">```</span>
+
+Prefill seconds cover one prompt. Decode seconds/item are an average over consumed
+contexts <span class="sb">`PROMPT+1`</span> through <span class="sb">`PROMPT+STEPS`</span>, not a percentile or a fixed-context
+latency. Timed regions exclude loading, allocation, sampling and text I/O.
+Training measurements are fixed-weight forward/backward pairs, not AdamW updates.
+Do not rank tiny timing differences when min/max intervals overlap or batches are
+flagged short. Rerun without competing builds and vary order between whole runs.
+
+Array payload and peak RSS answer different questions. The code prints native RSS
+units (Darwin bytes, Linux KiB) and converted bytes; confirm the local <span class="sb">`getrusage(2)`</span>
+manual on other systems. RSS includes startup/loading, stack, allocator and runtime,
+and can retain earlier peaks. It is not a sum of the reported live array payloads.
+
+For already prepared genuine SmolLM2 assets, activate the optional Python reference
+and tokenizer environment and run:
+
+<span class="sb">```sh</span>
+sh<span class="w"> </span>scripts/run_pretrained_demo.sh<span class="w"> </span>assets/smollm2-source<span class="w"> </span>assets/smollm2-f32<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>assets/smollm2-tokenizer<span class="w"> </span>runs/pretrained-01
+<span class="sb">```</span>
+
+This requires Chapter 20/21's pinned asset preparation; fixture metadata is rejected.
+It compares C traces to the independent CPU FP32 equations, selects IDs in C, decodes
+only afterward, compares identical generated prefixes, and measures three strategies
+in separate processes. The supplied tolerances are diagnostic targets, not guaranteed
+bounds. Provenance declarations do not authenticate arbitrary local file contents.
+
+<span class="sb">`summary.txt`</span>, <span class="sb">`*-loss.tsv`</span>, small <span class="sb">`*-check.txt`</span> and <span class="sb">`*-measure.txt`</span> files are enough
+for the compact result table. Checkpoints and detailed traces remain local. To rerun,
+choose another output directory rather than silently overwriting an earlier result.
+</code></pre></figure>
+<h2 id="observed-byte-model-learning-and-continuation">Observed byte-model learning and continuation</h2>
+<p>The following runs executed the C engine on <strong>x86_64 Linux, Clang 17</strong>, not the M4 Mac. The host identified an Intel Xeon Platinum 8573C; the container reported a 4 GiB memory limit and a four-CPU scheduling quota. The C kernels are single-threaded. These settings do not imply exclusive access to the host or fixed processor frequency. The optimized flags were <code>-O2 -fno-lto -fno-fast-math -ffp-contract=off</code>; the blocked backend retained its double reductions and float stores.</p>
+<p>The full 160-update pilot used the original diagnostic text produced by <code>make_demo_text.py</code>: a training file and a separate validation file. The data is intentionally tiny and repeatedly sampled. This is a test of learning mechanics, not a representative held-out language benchmark. Both strategies used the same seed, schedule, batch of two sequences of length 16, and <strong>one</strong> microbatch per update. The processed target count is <span class="math-input" data-display="false">160\times2\times16=5{,}120</span>, including repeated targets.</p>
+<table>
+<thead>
+<tr>
+<th>Configuration and attention</th>
+<th style="text-align:right">Updates</th>
+<th style="text-align:right">Processed targets</th>
+<th style="text-align:right">Validation targets scored</th>
+<th style="text-align:right">Initial loss</th>
+<th style="text-align:right">Final loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>29,856 parameters, full</td>
+<td style="text-align:right">160</td>
+<td style="text-align:right">5,120</td>
+<td style="text-align:right">128</td>
+<td style="text-align:right">5.725389095</td>
+<td style="text-align:right">2.398719681</td>
+</tr>
+<tr>
+<td>29,856 parameters, tiled</td>
+<td style="text-align:right">160</td>
+<td style="text-align:right">5,120</td>
+<td style="text-align:right">128</td>
+<td style="text-align:right">5.725389094</td>
+<td style="text-align:right">2.398719537</td>
+</tr>
+<tr>
+<td>2,885,888 parameters, tiled</td>
+<td style="text-align:right">8</td>
+<td style="text-align:right">2,048</td>
+<td style="text-align:right">256</td>
+<td style="text-align:right">5.474827494</td>
+<td style="text-align:right">3.021004048</td>
+</tr>
+</tbody>
+</table>
+<p>The larger configuration used two sequences of length 128 and one microbatch per update. It was run separately with the existing application, not inferred by scaling the pilot's loss. The two validation traversals leave 264 and 136 trailing bytes unscored respectively, as reported by the bounded iterator. They therefore do not evaluate identical sets of target positions; do not rank their final loss as a controlled model-size comparison.</p>
+<p>Earlier chapters used other microbatch schedules, including two microbatches per update. Equal update counts under those settings do not mean equal training exposure. The target-count TSV from Part 3 prevents that mismatch from being hidden by an update-only horizontal axis. None of these runs establishes broad language quality.</p>
+<p>For each pilot attention strategy, a split run resumed from its saved checkpoint and produced <strong>byte-identical final checkpoint contents</strong> to the uninterrupted run. Equality is required within a strategy, not between full and tiled checkpoint formats. The three generation strategies then used the same full-trained checkpoint. Greedy output and sampled output each matched byte-for-byte across full-prefix, tiled, and cached execution:</p>
+<figure class="code-block"><figcaption><span class="code-title">Output</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>Greedy: b'Once upon the t the t the the the the the the the '
+Sample: b'Once upon the thed blt che d rnd aindrrnd ind thit'
+</code></pre></figure>
+<p>Each transcript contains ten prompt bytes and forty selected bytes. The cached application consumes 49 inputs, because the last selected byte is returned without another forward pass. The small-model eight-byte greedy continuation was <code>b'Once upon         '</code>: it also matched across the three strategies, and is plainly not useful prose. A falling loss and correct state transitions do not make a model linguistically capable.</p>
+<p>The long pilot command sequence completed its training, equality, generation, gradient, and timing steps; an external command time limit interrupted its final measurement sweep, whose remaining commands were then executed directly. A fresh two-update smoke invocation subsequently completed the <strong>entire unmodified driver</strong> successfully. The selected timing tables below were rerun separately after compilation and correctness tests had stopped. This separates successful orchestration from a claim that one uninterrupted long process produced every observation.</p>
+<p>To repeat the larger eight-update run without duplicating the entire demonstration sweep, use a newly named checkpoint and the prepared diagnostic files:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>./build/release/train<span class="w"> </span>new<span class="w"> </span>configs/byte-small.conf<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>runs/pilot-01/text/train.bin<span class="w"> </span>runs/pilot-01/text/valid.bin<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>runs/small-eight.ckpt<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>random<span class="w"> </span>blocked<span class="w"> </span>tiled
+./build/release/generate<span class="w"> </span>configs/byte-small.conf<span class="w"> </span>runs/small-eight.ckpt<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>runs/pilot-01/prompt.bin<span class="w"> </span>runs/small-eight.bin<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">8</span><span class="w"> </span>greedy<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span><span class="m">2026</span><span class="w"> </span>blocked<span class="w"> </span>cache
+</code></pre></figure>
+<p>The training positional arguments are the total schedule length, stopping update, and microbatch count. The generation argument order is the previously implemented <code>CAPACITY NEW_TOKENS MODE TEMPERATURE SEED BACKEND STRATEGY</code>; greedy mode records but does not consume the sampling RNG. Use the application's usage message rather than swapping capacity and output-count arguments.</p>
+<h2 id="matrix-blocking-report-the-complete-call">Matrix blocking: report the complete call</h2>
+<p>The Chapter 6 kernel harness includes packing, dispatch, validation, arithmetic, and stores. All three shapes below passed its numerical comparison with maximum absolute error zero in this run. The operation count is a conventional dense multiply/add count, not an instrumented CPU instruction count. Each cell is <strong>minimum / median / maximum microseconds per complete call</strong> across five batches.</p>
+<table>
+<thead>
+<tr>
+<th>Logical shape <span class="math-input" data-display="false">(M,N,K)</span> / orientation</th>
+<th style="text-align:right">Repetitions per batch</th>
+<th style="text-align:right">Scalar reference, microseconds</th>
+<th style="text-align:right">Blocked C, microseconds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(1, 32, 32) / <code>nt</code></td>
+<td style="text-align:right">100,000</td>
+<td style="text-align:right">0.903 / 1.079 / 1.513</td>
+<td style="text-align:right">0.770 / 0.833 / 0.945</td>
+</tr>
+<tr>
+<td>(32, 80, 32) / <code>nt</code></td>
+<td style="text-align:right">1,000</td>
+<td style="text-align:right">78.922 / 88.182 / 121.707</td>
+<td style="text-align:right">36.496 / 41.759 / 48.620</td>
+</tr>
+<tr>
+<td>(17, 65, 33) / <code>nn</code></td>
+<td style="text-align:right">2,000</td>
+<td style="text-align:right">44.063 / 45.649 / 46.354</td>
+<td style="text-align:right">12.036 / 15.859 / 25.986</td>
+</tr>
+</tbody>
+</table>
+<p>The one-row result does not predict the many-row result. Packing cost, reuse, and tail handling interact with shape. The incomplete <span class="math-input" data-display="false">17\times65\times33</span> case exercises both output and reduction tails. No Accelerate adapter is introduced here: the final 0.75-hour extension is the C shape/tile sweep. A future library adapter must preserve orientation, leading dimensions, SET/ADD behavior, and tests before its time can be compared.</p>
+<h2 id="prefill-and-subsequent-inputs-are-different-phases">Prefill and subsequent inputs are different phases</h2>
+<p>These measurements use the trained pilot, the blocked matrix backend, 128 prompt IDs, eight further consumed IDs, capacity 136, and query/key tiles <span class="math-input" data-display="false">16\times32</span> in tiled mode. Each of five samples contains <strong>30 complete transcript replays</strong>, after an untimed warmup. The correctness processes compared 2,304 logit values per strategy against scalar full-prefix execution: full and cached maximum error was zero; tiled maximum error was <span class="math-input" data-display="false">5.96046448\times10^{-7}</span>.</p>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th style="text-align:right">Prefill milliseconds, min / median / max</th>
+<th style="text-align:right">Eight-input decode group milliseconds, min / median / max</th>
+<th style="text-align:right">Median milliseconds per subsequent input</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>full</td>
+<td style="text-align:right">4.247 / 4.398 / 5.051</td>
+<td style="text-align:right">36.616 / 40.125 / 47.386</td>
+<td style="text-align:right">5.016</td>
+</tr>
+<tr>
+<td>tiled</td>
+<td style="text-align:right">3.349 / 3.677 / 4.326</td>
+<td style="text-align:right">29.460 / 30.653 / 35.792</td>
+<td style="text-align:right">3.832</td>
+</tr>
+<tr>
+<td>cache</td>
+<td style="text-align:right">5.948 / 6.172 / 6.372</td>
+<td style="text-align:right">0.858 / 1.100 / 1.187</td>
+<td style="text-align:right">0.138</td>
+</tr>
+</tbody>
+</table>
+<p>The cache improves the subsequent-input group here, but has a slower measured prefill. That is a useful counterexample to treating “cached” as one universal speed multiplier. It avoids old-row projections after prefill; its prefill still uses the implementation's own attention traversal and validation. Tiled full-prefix inference saves workspace but continues to recompute old rows. These are observations for the specified code, sizes, flags, and host—not M4 latency estimates.</p>
+<p>The decode rate averages contexts 129 through 136. It is neither a percentile of eight individual token latencies nor a fixed-context benchmark. The sampled times exclude checkpoint loading, allocation, resetting cache length, token selection, and I/O. Separate-process peak RSS includes startup/loading as well as computation:</p>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th style="text-align:right">Weight bytes</th>
+<th style="text-align:right">Scratch bytes</th>
+<th style="text-align:right">History bytes</th>
+<th style="text-align:right">Other counted heap bytes</th>
+<th style="text-align:right">Total counted heap bytes</th>
+<th style="text-align:right">Peak resident bytes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>full</td>
+<td style="text-align:right">119,424</td>
+<td style="text-align:right">870,400</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">6,656</td>
+<td style="text-align:right">996,480</td>
+<td style="text-align:right">2,097,152</td>
+</tr>
+<tr>
+<td>tiled</td>
+<td style="text-align:right">119,424</td>
+<td style="text-align:right">296,960</td>
+<td style="text-align:right">0</td>
+<td style="text-align:right">6,656</td>
+<td style="text-align:right">423,040</td>
+<td style="text-align:right">1,572,864</td>
+</tr>
+<tr>
+<td>cache</td>
+<td style="text-align:right">119,424</td>
+<td style="text-align:right">262,208</td>
+<td style="text-align:right">34,816</td>
+<td style="text-align:right">6,656</td>
+<td style="text-align:right">423,104</td>
+<td style="text-align:right">1,499,136</td>
+</tr>
+</tbody>
+</table>
+<p>The weight arena is identical in every row. Cache history is not zero just because the inference scratch shrinks. Tiled and cached heap totals are nearly equal at this particular capacity for different structural reasons. Their small RSS difference is not evidence that the smaller-looking one always has the better memory design: RSS includes effects not represented by these live arrays and is only one process observation.</p>
+<h2 id="tiled-backward-a-memory-change-can-cost-time">Tiled backward: a memory change can cost time</h2>
+<p>The next sweep measures a complete fixed-weight forward/backward pair, not an optimizer update. Batch size is two; the pilot geometry is unchanged; tiled mode uses <span class="math-input" data-display="false">16\times32</span> tiles; both modes use blocked matrices. Five batches of <strong>ten</strong> pairs follow the warmup. The check action compares all 29,856 unique gradient values before each corresponding measurement; no reference tape exists in the measured process.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right">Sequence length</th>
+<th>Strategy</th>
+<th style="text-align:right">Pair milliseconds, min / median / max</th>
+<th style="text-align:right">Tape bytes</th>
+<th style="text-align:right">Total counted heap bytes</th>
+<th style="text-align:right">Peak resident bytes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">32</td>
+<td>full</td>
+<td style="text-align:right">3.988 / 4.145 / 4.506</td>
+<td style="text-align:right">770,048</td>
+<td style="text-align:right">1,018,128</td>
+<td style="text-align:right">1,998,848</td>
+</tr>
+<tr>
+<td style="text-align:right">32</td>
+<td>tiled</td>
+<td style="text-align:right">3.798 / 4.081 / 5.074</td>
+<td style="text-align:right">609,920</td>
+<td style="text-align:right">858,096</td>
+<td style="text-align:right">1,966,080</td>
+</tr>
+<tr>
+<td style="text-align:right">128</td>
+<td>full</td>
+<td style="text-align:right">25.856 / 26.010 / 30.952</td>
+<td style="text-align:right">5,439,488</td>
+<td style="text-align:right">5,695,248</td>
+<td style="text-align:right">6,815,744</td>
+</tr>
+<tr>
+<td style="text-align:right">128</td>
+<td>tiled</td>
+<td style="text-align:right">24.838 / 25.613 / 25.911</td>
+<td style="text-align:right">2,367,104</td>
+<td style="text-align:right">2,622,960</td>
+<td style="text-align:right">3,801,088</td>
+</tr>
+<tr>
+<td style="text-align:right">256</td>
+<td>full</td>
+<td style="text-align:right">66.925 / 68.524 / 73.932</td>
+<td style="text-align:right">17,170,432</td>
+<td style="text-align:right">17,436,432</td>
+<td style="text-align:right">18,612,224</td>
+</tr>
+<tr>
+<td style="text-align:right">256</td>
+<td>tiled</td>
+<td style="text-align:right">71.346 / 76.109 / 90.138</td>
+<td style="text-align:right">4,710,016</td>
+<td style="text-align:right">4,976,112</td>
+<td style="text-align:right">6,078,464</td>
+</tr>
+</tbody>
+</table>
+<p>At length 256, tiled tape storage is about 3.65 times smaller, while the median pair time is <strong>higher</strong> (76.109 rather than 68.524 milliseconds). Recomputed scores and probabilities, additional passes, and different traversal all do work. The result demonstrates the intended memory–recomputation tradeoff without asserting that recomputation is always slower or always faster. At the smaller lengths, timing intervals overlap substantially; a narrow median difference is not a stable ranking.</p>
+<p>Parameter/gradient storage stays at 238,848 bytes in every row. Tape storage changes with <span class="math-input" data-display="false">T</span>. Process resident memory also includes stack, allocator/runtime pages, and earlier model-construction peaks, so neither a constant overhead nor a constant ratio should be assumed. The materialized-minus-tiled storage difference is predictable from the square attention terms derived in Part 2; the runtime difference must be measured.</p>
+<p>A tail-heavy tile sweep uses sequence length 65, batch two, and ten repetitions per sample. All three choices pass the gradient comparison. None divides the sequence length exactly:</p>
+<table>
+<thead>
+<tr>
+<th>Query/key tiles</th>
+<th style="text-align:right">Pair milliseconds, min / median / max</th>
+<th style="text-align:right">Tape bytes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4 × 4</td>
+<td style="text-align:right">9.267 / 9.860 / 11.289</td>
+<td style="text-align:right">1,191,712</td>
+</tr>
+<tr>
+<td>16 × 16</td>
+<td style="text-align:right">10.469 / 13.435 / 20.967</td>
+<td style="text-align:right">1,203,712</td>
+</tr>
+<tr>
+<td>32 × 32</td>
+<td style="text-align:right">9.773 / 10.079 / 10.332</td>
+<td style="text-align:right">1,234,048</td>
+</tr>
+</tbody>
+</table>
+<p>The 16-by-16 run has conspicuous spread, including a much slower maximum. There was no concurrent course compilation during these selected reruns, but that does not eliminate shared-host scheduling or background activity. Repeat the whole sweep in a different order before treating tile size as the cause. The difference between 4-by-4 and 32-by-32 medians is too small relative to the observed ranges to justify an “optimal tile” claim.</p>
+<h2 id="run-realistically-on-the-16-gb-m4-target">Run realistically on the 16 GB M4 target</h2>
+<p>Start with debug/sanitizer correctness, then perform timings with the release executable. Run the pilot before the larger byte model. Record the actual <code>sw_vers</code>, compiler version, and hardware supplied by the driver; do not copy the Linux environment table into a Mac result. Close unrelated compute-heavy workloads, keep power/thermal conditions reasonably consistent, and repeat a changed experiment without simultaneous compilation. A monotonic clock's advertised resolution does not remove scheduling variation.</p>
+<p>Use the four-byte weight counts to budget ownership, not to predict resident memory. The selected pretrained geometry has 134,515,008 unique values, or 538,060,032 FP32 weight bytes. A 1,024-position cache needs <span class="math-input" data-display="false">4\times2\times30\times1024\times192=47{,}185{,}920</span> history bytes, in addition to workspace, result rows, metadata, and runtime. These are calculations from the <a href="https://huggingface.co/HuggingFaceTB/SmolLM2-135M/raw/93efa2f097d58c2a74874c7e644dbc9b0cee75a2/config.json">pinned configuration</a> and the implemented layouts, not measured M4 process memory. Avoid loading the Python reference and the C model simultaneously merely to time C; the drivers intentionally execute them sequentially.</p>
+<p>Memory fitting does not imply acceptable CPU time. The genuine driver deliberately begins with a short prompt and four selected IDs. The full tiled backward path is educational C with recomputation and explicit checks, not an Apple GPU/Neural Engine kernel. No macOS version, Accelerate backend, GPU speedup, or measured M4 throughput is assumed. Increase data exposure, context, and repetitions separately, using actual elapsed time and resident-memory observations to choose the next experiment.</p>
+<h2 id="diagnose-the-demonstration-not-only-the-model">Diagnose the demonstration, not only the model</h2>
+<p>Three deliberate harness mistakes were executed. Replacing <code>ids[count-1]</code> with <code>ids[0]</code> in cached decode failed the all-logit check (the first observed reference/actual pair was approximately −0.588776 and −0.195684). Removing the reset failed the next prefill's cache-state contract. Omitting division by item count failed the timing-arithmetic test even though the model calculations were still correct. Sanitizers reported no memory error in these three cases: arithmetic and state tests were the detecting tools.</p>
+<p>The correct implementation passed all 21 cumulative C test programs in debug, AddressSanitizer/UndefinedBehaviorSanitizer, and optimized builds on the stated Linux host. The 12 new measurement integration tests passed against each build, including a real <code>/dev/full</code> output failure. The inherited independent-reference, import, preparation, and training/generation checks also passed. These results establish the exercised paths, not untested genuine assets or M4 behavior.</p>
+<p>A rerun should end with four concrete artifacts: an interpretable loss-versus-processed-targets trace, an actual continuation, all-coordinate comparisons for the selected implementations, and a small timing/memory table with settings. A command that failed or never ran must remain labeled that way. A checkpoint restart that silently changes data RNG, schedule, or accumulation is not a continuation; a cache comparison on different prefixes is not an equivalence check; an RSS sample taken after allocating both alternatives does not measure either alternative in isolation.</p>
+<h2 id="what-the-completed-engine-exposes">What the completed engine exposes</h2>
+<p>A byte or pretrained vocabulary ID indexes one explicitly owned embedding table. The model traverses pre-normalized residual blocks with grouped-query attention, rotary coordinates, and a two-branch SwiGLU transformation. Stable loss produces the reverse signal; manual backward routines accumulate shared heads, residual paths, and the tied output/embedding contributions. The optimizer consumes a correctly weighted and clipped aggregate, while checkpoints preserve continuation state rather than only parameter values.</p>
+<p>The same weights then support full-prefix inference, reusable workspaces, categorical selection, and a cache whose committed length means all blocks have consumed the same prefix. Tiled attention replaces quadratic saved intermediates with bounded tiles and recomputed probabilities while preserving the modeled function within explicit numerical tolerances. Each of those mechanisms is inspectable as loops, memory owners, invariants, and executable checks.</p>
+<p>That is the completed demonstration: a C implementation that can learn a bounded text problem, resume coherently, select subsequent IDs, and expose where its computation and storage go. The trained byte-model results above are observed. The genuine pretrained commands are implemented but remain an explicit local validation task, not a fabricated result. The mathematical model, its engineering state, and the evidence for each claim are kept separate.</p>
+<h2 id="primary-references-used-in-this-chapter">Primary references used in this chapter</h2>
+<p>The <a href="https://man7.org/linux/man-pages/man3/clock_gettime.3.html">Linux <code>clock_gettime</code> manual</a> documents monotonic clock behavior and resolution queries. The <a href="https://man7.org/linux/man-pages/man2/getrusage.2.html">Linux <code>getrusage</code> manual</a> and <a href="https://man.freebsd.org/cgi/man.cgi?query=getrusage&amp;sektion=2&amp;manpath=macOS+10.13.6">macOS <code>getrusage</code> manual reproduction</a> specify the process statistic and platform units. The <a href="https://arxiv.org/html/2205.14135v2#S3.SS1">FlashAttention paper, Section 3.1</a>, explains the bounded-intermediate/recomputation strategy; its GPU measurements are not used as predictions here. The selected model's <a href="https://huggingface.co/HuggingFaceTB/SmolLM2-135M/raw/93efa2f097d58c2a74874c7e644dbc9b0cee75a2/config.json">pinned configuration</a> supplies the external geometry and token conventions. The numerical result tables in this chapter are direct executions of the supplied C programs, not values taken from those sources.</p>
+</article>
+<nav class="pager" aria-label="Previous and next chapters"><a href="chapter-22-part-3.html"><small>Previous · Chapter 22 · Part 3</small><span>A repeatable training, restart, and generation run</span></a></nav>
+<footer>Modern Language Models in C · Chapter 22 · Part 4</footer>
+</main>
+<aside class="page-toc" aria-label="In this chapter"><div class="toc-title">In this chapter</div><ul><li class="toc-h2"><a href="#run-the-already-prepared-genuine-assets">Run the already prepared genuine assets</a></li><li class="toc-h2"><a href="#keep-a-concise-run-guide-beside-the-implementation">Keep a concise run guide beside the implementation</a></li><li class="toc-h2"><a href="#observed-byte-model-learning-and-continuation">Observed byte-model learning and continuation</a></li><li class="toc-h2"><a href="#matrix-blocking-report-the-complete-call">Matrix blocking: report the complete call</a></li><li class="toc-h2"><a href="#prefill-and-subsequent-inputs-are-different-phases">Prefill and subsequent inputs are different phases</a></li><li class="toc-h2"><a href="#tiled-backward-a-memory-change-can-cost-time">Tiled backward: a memory change can cost time</a></li><li class="toc-h2"><a href="#run-realistically-on-the-16-gb-m4-target">Run realistically on the 16 GB M4 target</a></li><li class="toc-h2"><a href="#diagnose-the-demonstration-not-only-the-model">Diagnose the demonstration, not only the model</a></li><li class="toc-h2"><a href="#what-the-completed-engine-exposes">What the completed engine exposes</a></li><li class="toc-h2"><a href="#primary-references-used-in-this-chapter">Primary references used in this chapter</a></li></ul></aside>
+</div></body></html>

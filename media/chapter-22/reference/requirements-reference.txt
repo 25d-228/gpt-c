@@ -1,0 +1,6 @@
+# Install compatible maintained releases for your Python/platform.
+# CPU FP32 reference uses torch + safetensors; tokenization uses transformers.
+# No model generation or training is delegated to these Python packages.
+torch
+safetensors
+transformers

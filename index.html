@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roadmap — Decoder Laboratory in C · Modern Language Models in C</title>
+<meta name="description" content="A C decoder laboratory: explicit tensor layouts, manual gradients, small-model training, cached inference, and exact tiled attention.">
+<link rel="canonical" href="https://25d-228.github.io/gpt-c/index.html">
+<link rel="stylesheet" href="assets/code-light.css">
+<link rel="stylesheet" href="assets/course.css">
+<script>window.MathJax = {startup: {typeset: false}, options: {enableMenu: false}, svg: {fontCache: "local"}};</script>
+<script defer src="assets/vendor/tex-svg.js"></script>
+<script defer src="assets/course.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to chapter</a>
+<header class="topbar"><a class="brand" href="index.html"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 7C10 3 5 4 2 5v17c4-2 8-1 12 2m0-17c4-4 9-3 12-2v17c-4-2-8-1-12 2V7Z"/></svg><span>Modern Language Models in C</span></a>
+<div class="header-actions"><a class="desktop-link" href="index.html">Overview</a><a class="desktop-link" href="chapter-01.html">Chapters</a><a class="desktop-link" href="https://github.com/25d-228/gpt-c">Repository</a><button id="menu-toggle" type="button" aria-expanded="false" aria-controls="chapter-nav">Contents</button></div></header>
+<div class="book-layout">
+<aside class="sidebar" id="chapter-nav"><h2 class="sidebar-title">Contents</h2>
+<label for="chapter-filter">Find a chapter</label><input id="chapter-filter" type="search" placeholder="Search chapter titles…" autocomplete="off">
+<nav aria-label="Chapters"><ol><li><a href="index.html" aria-current="page"><span class="chapter-label">Roadmap</span><span>Decoder Laboratory in C</span></a></li><li><a href="chapter-01.html"><span class="chapter-label">Chapter 1</span><span>Native C builds and a debuggable numerical program</span></a></li><li><a href="chapter-02.html"><span class="chapter-label">Chapter 2</span><span>Owned buffers, borrowed views, and failure cleanup</span></a></li><li><a href="chapter-03.html"><span class="chapter-label">Chapter 3</span><span>Floating-point arithmetic and numerical derivatives</span></a></li><li><a href="chapter-04.html"><span class="chapter-label">Chapter 4</span><span>Tensor layouts and reference matrix products</span></a></li><li><a href="chapter-05.html"><span class="chapter-label">Chapter 5 · Part 1</span><span>Embeddings, stable loss, and elementary backward passes</span></a></li><li><a href="chapter-05-part-2.html"><span class="chapter-label">Chapter 5 · Part 2</span><span>Checking gradients and numerical failures</span></a></li><li><a href="chapter-06.html"><span class="chapter-label">Chapter 6 · Part 1</span><span>Blocked C kernels and meaningful timing</span></a></li><li><a href="chapter-06-part-2.html"><span class="chapter-label">Chapter 6 · Part 2</span><span>Timing complete kernel calls</span></a></li><li><a href="chapter-07.html"><span class="chapter-label">Chapter 7 · Part 1</span><span>RMSNorm and residual gradient paths</span></a></li><li><a href="chapter-07-part-2.html"><span class="chapter-label">Chapter 7 · Part 2</span><span>Checking normalization and residual graphs</span></a></li><li><a href="chapter-08.html"><span class="chapter-label">Chapter 8 · Part 1</span><span>SwiGLU and the two-branch backward pass</span></a></li><li><a href="chapter-08-part-2.html"><span class="chapter-label">Chapter 8 · Part 2</span><span>Checking feed-forward branches and saved state</span></a></li><li><a href="chapter-09.html"><span class="chapter-label">Chapter 9 · Part 1</span><span>Rotary positions as explicit coordinate transformations</span></a></li><li><a href="chapter-09-part-2.html"><span class="chapter-label">Chapter 9 · Part 2</span><span>Checking coordinate conventions and absolute positions</span></a></li><li><a href="chapter-10.html"><span class="chapter-label">Chapter 10 · Part 1</span><span>Causal grouped-query attention, forward</span></a></li><li><a href="chapter-10-part-2.html"><span class="chapter-label">Chapter 10 · Part 2</span><span>Checking causal attention and shared heads</span></a></li><li><a href="chapter-11.html"><span class="chapter-label">Chapter 11 · Part 1</span><span>Attention backward and shared-head accumulation</span></a></li><li><a href="chapter-11-part-2.html"><span class="chapter-label">Chapter 11 · Part 2</span><span>Checking attention gradients and accumulation</span></a></li><li><a href="chapter-12.html"><span class="chapter-label">Chapter 12 · Part 1</span><span>Assemble and differentiate the complete decoder</span></a></li><li><a href="chapter-12-part-2.html"><span class="chapter-label">Chapter 12 · Part 2</span><span>Training tape and reverse scheduling</span></a></li><li><a href="chapter-12-part-3.html"><span class="chapter-label">Chapter 12 · Part 3</span><span>Checking the assembled model</span></a></li><li><a href="chapter-13.html"><span class="chapter-label">Chapter 13 · Part 1</span><span>Byte text, shifted targets, and bounded data preparation</span></a></li><li><a href="chapter-13-part-2.html"><span class="chapter-label">Chapter 13 · Part 2</span><span>Bounded preparation and end-to-end checks</span></a></li><li><a href="chapter-14.html"><span class="chapter-label">Chapter 14 · Part 1</span><span>AdamW, accumulation, and gradient clipping</span></a></li><li><a href="chapter-14-part-2.html"><span class="chapter-label">Chapter 14 · Part 2</span><span>Checking optimizer state and equivalent batches</span></a></li><li><a href="chapter-15.html"><span class="chapter-label">Chapter 15 · Part 1</span><span>Train, evaluate, checkpoint, and resume</span></a></li><li><a href="chapter-15-part-2.html"><span class="chapter-label">Chapter 15 · Part 2</span><span>Versioned checkpoints and coherent restoration</span></a></li><li><a href="chapter-15-part-3.html"><span class="chapter-label">Chapter 15 · Part 3</span><span>Running the training application</span></a></li><li><a href="chapter-15-part-4.html"><span class="chapter-label">Chapter 15 · Part 4</span><span>Checking continuation and failure recovery</span></a></li><li><a href="chapter-16.html"><span class="chapter-label">Chapter 16 · Part 1</span><span>Inference workspaces and token sampling</span></a></li><li><a href="chapter-16-part-2.html"><span class="chapter-label">Chapter 16 · Part 2</span><span>Weight-only loading and categorical selection</span></a></li><li><a href="chapter-16-part-3.html"><span class="chapter-label">Chapter 16 · Part 3</span><span>Full-prefix generation and executable checks</span></a></li><li><a href="chapter-17.html"><span class="chapter-label">Chapter 17 · Part 1</span><span>Prefill and incremental key/value caching</span></a></li><li><a href="chapter-17-part-2.html"><span class="chapter-label">Chapter 17 · Part 2</span><span>Computing and committing a cached step</span></a></li><li><a href="chapter-17-part-3.html"><span class="chapter-label">Chapter 17 · Part 3</span><span>Checking cache equivalence and failure recovery</span></a></li><li><a href="chapter-18.html"><span class="chapter-label">Chapter 18 · Part 1</span><span>Online normalization and tiled attention forward</span></a></li><li><a href="chapter-18-part-2.html"><span class="chapter-label">Chapter 18 · Part 2</span><span>Integrating bounded attention into inference</span></a></li><li><a href="chapter-18-part-3.html"><span class="chapter-label">Chapter 18 · Part 3</span><span>Checking tiled outputs, storage, and generation</span></a></li><li><a href="chapter-19.html"><span class="chapter-label">Chapter 19 · Part 1</span><span>Recomputed tiled backward without a quadratic tape</span></a></li><li><a href="chapter-19-part-2.html"><span class="chapter-label">Chapter 19 · Part 2</span><span>A linear training tape and paired dispatch</span></a></li><li><a href="chapter-19-part-3.html"><span class="chapter-label">Chapter 19 · Part 3</span><span>Training policy and versioned continuation</span></a></li><li><a href="chapter-19-part-4.html"><span class="chapter-label">Chapter 19 · Part 4</span><span>Checking tiled core and sublayer gradients</span></a></li><li><a href="chapter-19-part-5.html"><span class="chapter-label">Chapter 19 · Part 5</span><span>Whole-model, training, and memory checks</span></a></li><li><a href="chapter-20.html"><span class="chapter-label">Chapter 20 · Part 1</span><span>Import and validate pretrained weights</span></a></li><li><a href="chapter-20-part-2.html"><span class="chapter-label">Chapter 20 · Part 2</span><span>Bounded C loading and imported position limits</span></a></li><li><a href="chapter-20-part-3.html"><span class="chapter-label">Chapter 20 · Part 3</span><span>Executable import fixtures and the C inspection path</span></a></li><li><a href="chapter-20-part-4.html"><span class="chapter-label">Chapter 20 · Part 4</span><span>Cross-language validation and separate memory measurements</span></a></li><li><a href="chapter-21.html"><span class="chapter-label">Chapter 21 · Part 1</span><span>Tokenizer boundaries and pretrained reference agreement</span></a></li><li><a href="chapter-21-part-2.html"><span class="chapter-label">Chapter 21 · Part 2</span><span>Observing C execution and selecting vocabulary IDs</span></a></li><li><a href="chapter-21-part-3.html"><span class="chapter-label">Chapter 21 · Part 3</span><span>Independent eager equations and numerical disagreement</span></a></li><li><a href="chapter-21-part-4.html"><span class="chapter-label">Chapter 21 · Part 4</span><span>Executable checks and the real-asset workflow</span></a></li><li><a href="chapter-22.html"><span class="chapter-label">Chapter 22 · Part 1</span><span>End-to-end demonstration and measured tradeoffs</span></a></li><li><a href="chapter-22-part-2.html"><span class="chapter-label">Chapter 22 · Part 2</span><span>Measure forward/backward pairs and test the harness</span></a></li><li><a href="chapter-22-part-3.html"><span class="chapter-label">Chapter 22 · Part 3</span><span>A repeatable training, restart, and generation run</span></a></li><li><a href="chapter-22-part-4.html"><span class="chapter-label">Chapter 22 · Part 4</span><span>Interpret the measurements and complete the demonstration</span></a></li></ol></nav>
+<p class="sidebar-note">A C decoder laboratory: explicit tensor layouts, manual gradients, small-model training, cached inference, and exact tiled attention.</p></aside>
+<main id="main-content" tabindex="-1">
+<div class="breadcrumb"><a href="index.html">Modern Language Models in C</a><span aria-hidden="true">/</span><span>Roadmap</span></div>
+<div class="page-actions"><a href="https://github.com/25d-228/gpt-c/issues/1">Read on GitHub</a><a href="source/roadmap.md">Markdown</a></div>
+<details class="mobile-toc"><summary>In this chapter</summary><ul><li class="toc-h2"><a href="#what-the-completed-program-does">What the completed program does</a></li><li class="toc-h2"><a href="#starting-knowledge-and-native-tools">Starting knowledge and native tools</a></li><li class="toc-h2"><a href="#one-architecture-two-configurations">One architecture, two configurations</a></li><li class="toc-h3"><a href="#dimensions-and-tensor-conventions">Dimensions and tensor conventions</a></li><li class="toc-h3"><a href="#ownership-state-and-dependency-boundaries">Ownership, state, and dependency boundaries</a></li><li class="toc-h2"><a href="#resource-envelope-and-useful-measurements">Resource envelope and useful measurements</a></li><li class="toc-h2"><a href="#implementation-layout">Implementation layout</a></li><li class="toc-h2"><a href="#chapter-plan-and-implementation-hours">Chapter plan and implementation hours</a></li><li class="toc-h3"><a href="#chapter-1-native-c-builds-and-a-debuggable-numerical-program">Chapter 1 — Native C builds and a debuggable numerical program</a></li><li class="toc-h3"><a href="#chapter-2-owned-buffers-borrowed-views-and-failure-cleanup">Chapter 2 — Owned buffers, borrowed views, and failure cleanup</a></li><li class="toc-h3"><a href="#chapter-3-floating-point-arithmetic-and-numerical-derivatives">Chapter 3 — Floating-point arithmetic and numerical derivatives</a></li><li class="toc-h3"><a href="#chapter-4-tensor-layouts-and-reference-matrix-products">Chapter 4 — Tensor layouts and reference matrix products</a></li><li class="toc-h3"><a href="#chapter-5-embeddings-stable-loss-and-elementary-backward-passes">Chapter 5 — Embeddings, stable loss, and elementary backward passes</a></li><li class="toc-h3"><a href="#chapter-6-blocked-c-kernels-and-meaningful-timing">Chapter 6 — Blocked C kernels and meaningful timing</a></li><li class="toc-h3"><a href="#chapter-7-rmsnorm-and-residual-gradient-paths">Chapter 7 — RMSNorm and residual gradient paths</a></li><li class="toc-h3"><a href="#chapter-8-swiglu-and-the-two-branch-backward-pass">Chapter 8 — SwiGLU and the two-branch backward pass</a></li><li class="toc-h3"><a href="#chapter-9-rotary-positions-as-explicit-coordinate-transformations">Chapter 9 — Rotary positions as explicit coordinate transformations</a></li><li class="toc-h3"><a href="#chapter-10-causal-grouped-query-attention-forward">Chapter 10 — Causal grouped-query attention, forward</a></li><li class="toc-h3"><a href="#chapter-11-attention-backward-and-shared-head-accumulation">Chapter 11 — Attention backward and shared-head accumulation</a></li><li class="toc-h3"><a href="#chapter-12-assemble-and-differentiate-the-complete-decoder">Chapter 12 — Assemble and differentiate the complete decoder</a></li><li class="toc-h3"><a href="#chapter-13-byte-text-shifted-targets-and-bounded-data-preparation">Chapter 13 — Byte text, shifted targets, and bounded data preparation</a></li><li class="toc-h3"><a href="#chapter-14-adamw-accumulation-and-gradient-clipping">Chapter 14 — AdamW, accumulation, and gradient clipping</a></li><li class="toc-h3"><a href="#chapter-15-train-evaluate-checkpoint-and-resume">Chapter 15 — Train, evaluate, checkpoint, and resume</a></li><li class="toc-h3"><a href="#chapter-16-inference-workspaces-and-token-sampling">Chapter 16 — Inference workspaces and token sampling</a></li><li class="toc-h3"><a href="#chapter-17-prefill-and-incremental-keyvalue-caching">Chapter 17 — Prefill and incremental key/value caching</a></li><li class="toc-h3"><a href="#chapter-18-online-normalization-and-tiled-attention-forward">Chapter 18 — Online normalization and tiled attention forward</a></li><li class="toc-h3"><a href="#chapter-19-recomputed-tiled-backward-without-a-quadratic-tape">Chapter 19 — Recomputed tiled backward without a quadratic tape</a></li><li class="toc-h3"><a href="#chapter-20-import-and-validate-pretrained-weights">Chapter 20 — Import and validate pretrained weights</a></li><li class="toc-h3"><a href="#chapter-21-tokenizer-boundaries-and-pretrained-reference-agreement">Chapter 21 — Tokenizer boundaries and pretrained reference agreement</a></li><li class="toc-h3"><a href="#chapter-22-end-to-end-demonstration-and-measured-tradeoffs">Chapter 22 — End-to-end demonstration and measured tradeoffs</a></li><li class="toc-h2"><a href="#milestones-and-scope-boundaries">Milestones and scope boundaries</a></li><li class="toc-h2"><a href="#technical-references">Technical references</a></li></ul></details>
+<p id="math-status" hidden>Some mathematics could not be rendered. The original notation remains visible.</p>
+<article><h1 id="decoder-laboratory-in-c">Decoder Laboratory in C</h1>
+<p>Build a decoder whose computation can be followed from a byte in a text file to a predicted token, and from a scalar training loss back to every parameter. The implementation is a native C17 program: explicit array layouts, owned buffers, handwritten derivatives, a training loop, and a stateful inference engine. No tensor framework executes the model on its behalf.</p>
+<p>The same engine has two uses. A <strong>2,885,888-parameter byte model</strong> learns from a bounded text corpus. An inference-only configuration loads <strong>SmolLM2-135M</strong> and connects the same operators to pretrained weights and their tokenizer. The additional memory-efficiency mechanism is <strong>exact tiled attention, including backward computation</strong>. It removes the full attention-probability matrix from the optimized path without changing the intended attention function.</p>
+<blockquote>
+<p><strong>Learning objectives</strong>
+Trace shapes and ownership through a modern decoder; derive and implement its gradients; train, evaluate, checkpoint, and resume a small model; distinguish full-prefix evaluation, prefill, and incremental decoding; and explain the numerical and memory tradeoffs of tiled attention using working C code.</p>
+</blockquote>
+<h2 id="what-the-completed-program-does">What the completed program does</h2>
+<p>The finished laboratory contains a scalar reference path and a blocked C matrix-product path. Both remain usable for diagnosis. A command-line training program performs forward computation, loss evaluation, backward computation, gradient accumulation, clipping, and optimizer updates in C. A generation program uses either full-prefix recomputation or a persistent key/value cache. A comparison program checks numerical agreement before measuring memory or elapsed time.</p>
+<p>The final demonstration crosses these components rather than presenting isolated operators. It trains the byte model, evaluates held-out text, writes a checkpoint, resumes the next updates, and generates a continuation. It compares full-prefix and cached logits on identical token prefixes. It compares materialized and tiled attention outputs <strong>and all three input gradients</strong>, then repeats the comparison through a model update. Finally, it imports the pretrained configuration and compares short C-computed continuations and logits with an independent reference.</p>
+<p>A training run is not replaced by an overfit-one-batch exercise. The latter is an early diagnostic. The former uses separate training and validation inputs, reports the number of processed tokens, and preserves enough state to resume. Output quality depends on the actual data and compute used; the small byte model is not presented as an instruction-following assistant.</p>
+<h2 id="starting-knowledge-and-native-tools">Starting knowledge and native tools</h2>
+<p>Basic C expressions, loops, functions, and elementary Python are sufficient starting points. The foundations introduce translation units, pointer contracts, ownership, numerical types, and differentiation before the decoder build. Matrix multiplication, probability normalization, the chain rule, attention, and tokenization boundaries are explained when first needed; transformer expertise is not a prerequisite.</p>
+<p>The target is an <strong>M4 Mac mini with 16 GB unified memory</strong>, running native macOS. Use an installed compatible Apple Clang/Command Line Tools toolchain, a shell, <code>make</code>, and Python 3 for preparation and checks. C17 is the source-language baseline, not a requirement for one exact compiler release. The required features are ordinary C compilation and linking, the C mathematical library, debug symbols, and usable address/undefined-behavior sanitizer builds. Chapter 1 tests the installed toolchain rather than inferring capabilities from its version string. See <a href="https://developer.apple.com/xcode/resources/">Apple's tool resources</a> and the <a href="https://clang.llvm.org/docs/AddressSanitizer.html#usage">Clang sanitizer instructions</a>.</p>
+<p>These observation commands do not install or upgrade anything:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — inspect the local environment</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>sw_vers
+uname<span class="w"> </span>-m
+xcrun<span class="w"> </span>clang<span class="w"> </span>--version
+xcrun<span class="w"> </span>lldb<span class="w"> </span>--version
+make<span class="w"> </span>--version
+python3<span class="w"> </span>--version
+</code></pre></figure>
+<p>Keep debug/sanitized and optimized builds separate. Correctness checks do not use <code>-ffast-math</code>: its assumptions about non-finite values and algebraic transformations are inappropriate for those checks, as documented in the <a href="https://clang.llvm.org/docs/UsersManual.html#controlling-floating-point-behavior">Clang floating-point guide</a>. No particular macOS version is assumed. A compatible alternative compiler is acceptable; it must pass the same small feature checks.</p>
+<p>Python dependencies enter only when an asset or reference exercise needs them. Dataset streaming, Safetensors conversion, tokenization, and an isolated model checker are separate from the C executable. The C engine requires neither a Python interpreter nor a framework runtime once inputs have been prepared. The optional final Accelerate adapter substitutes only matrix products already implemented in C. There is no required Metal, CUDA, virtual machine, GPU cluster, or architecture-specific assembly.</p>
+<h2 id="one-architecture-two-configurations">One architecture, two configurations</h2>
+<p>A decoder predicts the next token from preceding tokens. Here a token is an integer indexing an embedding table. A training window supplies an input sequence and a target sequence shifted forward by one position. The hidden state is a vector for each input token. Each block updates those vectors using earlier positions, never future ones.</p>
+<p>The block ordering is pre-normalization, attention, residual addition, pre-normalization, a gated feed-forward network, and a second residual addition. A residual addition adds a sublayer's result to its input. <a href="https://arxiv.org/html/2302.13971v1">LLaMA Section 2.2</a> provides an architectural reference for pre-normalization, RMSNorm, SwiGLU, and rotary positions; <a href="https://arxiv.org/html/2305.13245v3">GQA Section 2.2</a> describes sharing key/value heads among groups of query heads.</p>
+<p>The named operators have specific jobs. RMSNorm rescales each token's coordinates using their root mean square and learned per-coordinate scales. RoPE rotates query and key coordinates according to position. Grouped-query attention forms weighted sums of earlier value vectors. SwiGLU multiplies a SiLU-activated projection by a second projection before projecting back to the model width. Each operator receives both a forward implementation and a derived backward implementation; the component papers are linked in their chapter plans below.</p>
+<p>Let <span class="math-input" data-display="false">X</span> be the input to a block, <span class="math-input" data-display="false">A</span> the attention sublayer including its projections, and <span class="math-input" data-display="false">F</span> the feed-forward sublayer. The subscripts distinguish the two independently learned normalization scales:</p>
+<div class="math-input" data-display="true">U = X + A(\operatorname{RMSNorm}_1(X)),</div>
+<div class="math-input" data-display="true">Y = U + F(\operatorname{RMSNorm}_2(U)).</div>
+<p>The output <span class="math-input" data-display="false">Y</span> becomes the next block's input. After the last block, a final RMSNorm produces <span class="math-input" data-display="false">Z</span>. The embedding matrix <span class="math-input" data-display="false">E</span> is also the output-projection weight:</p>
+<div class="math-input" data-display="true">\text{logits} = Z E^{\mathsf T}.</div>
+<p>A logit is an unnormalized score for one vocabulary entry. Sharing <span class="math-input" data-display="false">E</span> means one parameter allocation, not two copies that happen to start equal. Its gradient receives contributions from both embedding lookup and output projection. The required model has no biases, dropout, learned position table, or general-purpose automatic-differentiation engine.</p>
+<h3 id="dimensions-and-tensor-conventions">Dimensions and tensor conventions</h3>
+<p>Use <span class="math-input" data-display="false">B</span> for the number of sequences in a microbatch, <span class="math-input" data-display="false">T</span> for tokens per sequence, <span class="math-input" data-display="false">V</span> for vocabulary size, <span class="math-input" data-display="false">d</span> for model width, <span class="math-input" data-display="false">L</span> for block count, <span class="math-input" data-display="false">H_q</span> for query heads, <span class="math-input" data-display="false">H_{kv}</span> for key/value heads, <span class="math-input" data-display="false">d_h=d/H_q</span> for coordinates per head, and <span class="math-input" data-display="false">f</span> for feed-forward width. A microbatch is the group processed by one forward/backward pair; several microbatches can contribute to one update.</p>
+<table>
+<thead>
+<tr>
+<th>Quantity</th>
+<th style="text-align:right">Byte-model training configuration</th>
+<th style="text-align:right">Pretrained inference configuration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vocabulary <span class="math-input" data-display="false">V</span></td>
+<td style="text-align:right">256 byte IDs</td>
+<td style="text-align:right">49,152 tokenizer IDs</td>
+</tr>
+<tr>
+<td>Blocks <span class="math-input" data-display="false">L</span></td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">30</td>
+</tr>
+<tr>
+<td>Width <span class="math-input" data-display="false">d</span></td>
+<td style="text-align:right">256</td>
+<td style="text-align:right">576</td>
+</tr>
+<tr>
+<td>Query heads <span class="math-input" data-display="false">H_q</span></td>
+<td style="text-align:right">8</td>
+<td style="text-align:right">9</td>
+</tr>
+<tr>
+<td>Key/value heads <span class="math-input" data-display="false">H_{kv}</span></td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">3</td>
+</tr>
+<tr>
+<td>Head width <span class="math-input" data-display="false">d_h</span></td>
+<td style="text-align:right">32</td>
+<td style="text-align:right">64</td>
+</tr>
+<tr>
+<td>Feed-forward width <span class="math-input" data-display="false">f</span></td>
+<td style="text-align:right">704</td>
+<td style="text-align:right">1,536</td>
+</tr>
+<tr>
+<td>RMSNorm epsilon</td>
+<td style="text-align:right"><span class="math-input" data-display="false">10^{-5}</span></td>
+<td style="text-align:right"><span class="math-input" data-display="false">10^{-5}</span></td>
+</tr>
+<tr>
+<td>RoPE frequency base</td>
+<td style="text-align:right">10,000</td>
+<td style="text-align:right">100,000</td>
+</tr>
+<tr>
+<td>Initial operating size</td>
+<td style="text-align:right"><span class="math-input" data-display="false">B=2</span>, <span class="math-input" data-display="false">T=128</span></td>
+<td style="text-align:right"><span class="math-input" data-display="false">B=1</span>, cache capacity 1,024</td>
+</tr>
+<tr>
+<td>Parameter training</td>
+<td style="text-align:right">All unique parameters</td>
+<td style="text-align:right">None</td>
+</tr>
+</tbody>
+</table>
+<p>The pretrained values come from the <a href="https://huggingface.co/HuggingFaceTB/SmolLM2-135M/raw/main/config.json">official SmolLM2-135M configuration</a>. Its upstream position limit is 8,192; <strong>1,024 is this laboratory's initial cache limit</strong>, not a claim about the model's maximum context. Conversion must validate the actual downloaded configuration and tensor inventory. The byte-model values are laboratory design choices, not a reconstruction of upstream pretraining.</p>
+<p>All required weights, activations, gradients, and optimizer arrays are stored as FP32. Small numerical checks can use double-precision evaluation or accumulation as explicitly identified by the relevant chapter. Matrices use row-major storage. A linear layer stores its weight as <code>[output_features, input_features]</code> and computes <span class="math-input" data-display="false">XW^{\mathsf T}</span>; it does not silently transpose the checkpoint's meaning.</p>
+<table>
+<thead>
+<tr>
+<th>Buffer</th>
+<th>Logical shape</th>
+<th>Storage or ownership rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input and target IDs</td>
+<td><code>[B, T]</code> each</td>
+<td>Integer IDs; validate before lookup</td>
+</tr>
+<tr>
+<td>Embedding table</td>
+<td><code>[V, d]</code></td>
+<td>Also owns the tied output weight</td>
+</tr>
+<tr>
+<td>Hidden state</td>
+<td><code>[B, T, d]</code></td>
+<td>May be viewed as <code>[B*T, d]</code> without copying</td>
+</tr>
+<tr>
+<td>Queries</td>
+<td><code>[B, T, Hq, dh]</code></td>
+<td>Query-head axis is not the key/value-head axis</td>
+</tr>
+<tr>
+<td>Keys and values</td>
+<td><code>[B, T, Hkv, dh]</code> each</td>
+<td>Shared heads are not physically repeated</td>
+</tr>
+<tr>
+<td>Reference attention probabilities</td>
+<td><code>[B, Hq, T, T]</code></td>
+<td>Stored only by the materialized training path</td>
+</tr>
+<tr>
+<td>Tiled attention row statistics</td>
+<td><code>[B, Hq, T]</code></td>
+<td>Per-row log-sum-exp, plus saved operator inputs/output</td>
+</tr>
+<tr>
+<td>Inference key and value caches</td>
+<td><code>[L, B, Hkv, capacity, dh]</code> each</td>
+<td>Only entries before committed length are valid</td>
+</tr>
+</tbody>
+</table>
+<p>Validate positive dimensions, divisibility of <span class="math-input" data-display="false">d</span> by <span class="math-input" data-display="false">H_q</span>, divisibility of <span class="math-input" data-display="false">H_q</span> by <span class="math-input" data-display="false">H_{kv}</span>, and even <span class="math-input" data-display="false">d_h</span>. Query head <code>h</code> uses key/value head <code>h / (Hq / Hkv)</code>. RoPE uses <strong>split-half coordinate pairing</strong> throughout, matching the selected pretrained configuration. Position zero, later positions, and backward rotations are checked before cache integration.</p>
+<h3 id="ownership-state-and-dependency-boundaries">Ownership, state, and dependency boundaries</h3>
+<p>The model owns unique parameter arrays and a stable parameter directory. Training state separately owns gradients, Adam moments, and saved forward intermediates needed by backward computation. Inference owns a reusable workspace and, when requested, a cache. Loading pretrained weights must not allocate training moments or retain every layer's training intermediates.</p>
+<p>Kernel inputs are borrowed buffers with declared shapes, strides, and overlap rules. Outputs explicitly distinguish overwrite from accumulation. Allocation happens at controlled boundaries, not in each inner product. Failed shape checks and allocation attempts return errors with cleanup; input validation is not replaced by assertions that disappear in optimized builds. Chapter 2 establishes these conventions with a standalone program before they become model infrastructure.</p>
+<p>Python may prepare a bounded corpus, convert named checkpoint tensors to the documented course format, tokenize/detokenize pretrained inputs and outputs, and emit independent reference values. It does not perform the C program's projections, normalization, attention, loss, updates, sampling, or cache management. A reference framework is a separate checker, not a hidden fallback. Safetensors parsing and the upstream tokenizer are peripheral dependencies; C validates and owns the converted weights it executes.</p>
+<h2 id="resource-envelope-and-useful-measurements">Resource envelope and useful measurements</h2>
+<p>The bias-free architecture with a tied embedding/output table has the following parameter count:</p>
+<div class="math-input" data-display="true">N = Vd + L\left(2d^2 + 2dH_{kv}d_h + 3df + 2d\right) + d.</div>
+<p>The terms count the shared table, query/output projections, key/value projections, three feed-forward projections, two normalization scales per block, and the final scale. This gives 2,885,888 parameters for training and 134,515,008 for pretrained inference. The latter is calculated from the published configuration, not inferred from the rounded model name.</p>
+<p>One MiB means <span class="math-input" data-display="false">2^{20}</span> bytes. The following are <strong>array-size calculations, not observed process memory</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Allocation</th>
+<th style="text-align:right">Calculated size</th>
+<th>What remains outside it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Byte-model FP32 weights</td>
+<td style="text-align:right">11.01 MiB</td>
+<td>Gradients, moments, saved activations</td>
+</tr>
+<tr>
+<td>Byte-model weights + gradients + two Adam moments</td>
+<td style="text-align:right">44.04 MiB</td>
+<td>Data and all activation/workspace storage</td>
+</tr>
+<tr>
+<td>One attention matrix per training block, all four blocks, <span class="math-input" data-display="false">B=2,T=128</span></td>
+<td style="text-align:right">4.00 MiB</td>
+<td>Any additional score/gradient matrices</td>
+</tr>
+<tr>
+<td>Pretrained FP32 weights</td>
+<td style="text-align:right">513.13 MiB</td>
+<td>Cache, workspace, loader intermediates</td>
+</tr>
+<tr>
+<td>Pretrained key/value cache, capacity 1,024</td>
+<td style="text-align:right">45.00 MiB</td>
+<td>Weights and current-token workspace</td>
+</tr>
+<tr>
+<td>One pretrained layer's materialized attention matrix at <span class="math-input" data-display="false">T=1024</span></td>
+<td style="text-align:right">36.00 MiB</td>
+<td>Other layer buffers</td>
+</tr>
+<tr>
+<td>Full pretrained logits for all 1,024 positions</td>
+<td style="text-align:right">192.00 MiB</td>
+<td>Avoided when only final-position logits are needed</td>
+</tr>
+</tbody>
+</table>
+<p>The cache calculation is <span class="math-input" data-display="false">2LBH_{kv}Cd_h\cdot4</span> bytes, where <span class="math-input" data-display="false">C</span> is allocated capacity and the factor two counts keys and values. Normal generation computes the needed final-position vocabulary scores rather than retaining all prompt-position logits. Training and short reference comparisons have different output requirements.</p>
+<p>Initial <strong>working budgets to verify</strong> are below 512 MiB for the default byte-model training process and below 2 GiB for the pretrained C inference process. They are neither measured peak resident sizes nor whole-system guarantees. Report accounted live arrays separately from operating-system process measurements. Run weight conversion and the independent Python reference separately from the C memory measurement; include temporary conversion copies in their own memory accounting.</p>
+<p>CPU runtime remains an empirical question. Start training with a short pilot and measure the optimized C path before committing to a longer run. Aim initially for roughly <strong>one to two million processed byte tokens</strong>, with the achieved token count stated alongside loss. Reduce the run size or the number of repeated measurements when necessary, not the implementation of backward computation or cache correctness. Accumulation increases tokens per update without multiplying simultaneously live activation storage. Reading time and unattended compute are separate from implementation effort.</p>
+<p>Exact tiled attention means the same mathematical attention as the materialized reference, not identical last bits or guaranteed speedup. The online-normalization and recomputation ideas are described in the <a href="https://arxiv.org/html/1805.02867v1">online-normalizer paper</a> and <a href="https://arxiv.org/html/2205.14135v2">FlashAttention</a>. The laboratory implements CPU loops and buffers, not that paper's tuned GPU kernel. Quadratic query/key arithmetic remains; the removed allocation is the full score/probability matrix in the optimized path.</p>
+<h2 id="implementation-layout">Implementation layout</h2>
+<p>The learner project lives on <code>work/decoder-lab</code>. Its files are introduced progressively; this is the intended application layout, not a requirement to create empty files in advance. The course index remains on <code>main</code>, and the book remains separate from application source.</p>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Makefile</code></td>
+<td>Debug, sanitizer, optimized, test, and measurement targets</td>
+</tr>
+<tr>
+<td><code>examples/01-build/</code></td>
+<td>Complete multi-file dot-product program</td>
+</tr>
+<tr>
+<td><code>examples/02-storage/</code></td>
+<td>Complete owned-buffer and borrowed-view program</td>
+</tr>
+<tr>
+<td><code>examples/03-numerics/</code></td>
+<td>Complete floating-point and finite-difference program</td>
+</tr>
+<tr>
+<td><code>include/dl/</code></td>
+<td>Public C headers for the modules below</td>
+</tr>
+<tr>
+<td><code>src/common.c</code>, <code>src/tensor.c</code></td>
+<td>Status, checked sizes, storage, views, and shape checks</td>
+</tr>
+<tr>
+<td><code>src/kernels.c</code>, <code>src/loss.c</code></td>
+<td>Scalar/blocked products, embeddings, cross-entropy, and their derivatives</td>
+</tr>
+<tr>
+<td><code>src/norm.c</code>, <code>src/ffn.c</code>, <code>src/rope.c</code></td>
+<td>RMSNorm, SwiGLU, and positional rotations</td>
+</tr>
+<tr>
+<td><code>src/attention_ref.c</code>, <code>src/attention_tiled.c</code></td>
+<td>Materialized and bounded-tile attention paths</td>
+</tr>
+<tr>
+<td><code>src/model.c</code>, <code>src/rng.c</code></td>
+<td>Configuration, unique parameters, decoder composition, and explicit random state</td>
+</tr>
+<tr>
+<td><code>src/data.c</code>, <code>src/optim.c</code>, <code>src/checkpoint.c</code></td>
+<td>Byte windows, training updates, and validated persistence</td>
+</tr>
+<tr>
+<td><code>src/inference.c</code>, <code>src/cache.c</code>, <code>src/sample.c</code></td>
+<td>Inference workspace, cache state, and token selection</td>
+</tr>
+<tr>
+<td><code>src/accelerate.c</code></td>
+<td>Optional matrix-product adapter introduced at the end</td>
+</tr>
+<tr>
+<td><code>app/train.c</code>, <code>app/generate.c</code>, <code>app/compare.c</code></td>
+<td>Small command-line drivers, not a service</td>
+</tr>
+<tr>
+<td><code>tests/</code></td>
+<td>Deterministic fixtures and executable checks introduced with each subsystem</td>
+</tr>
+<tr>
+<td><code>scripts/</code></td>
+<td>Bounded data preparation, weight conversion, tokenization, and independent checks</td>
+</tr>
+<tr>
+<td><code>configs/</code></td>
+<td>Tiny diagnostic, byte-training, and validated imported configurations</td>
+</tr>
+<tr>
+<td><code>data/</code>, <code>weights/</code>, <code>runs/</code>, <code>build/</code></td>
+<td>Local assets and generated outputs; not committed course content</td>
+</tr>
+</tbody>
+</table>
+<p>A C source module's public interface is declared in the matching header under <code>include/dl/</code>. The three foundation examples remain independently runnable: they do not depend on this later project tree. Tests and drivers acquire their interfaces in the chapter that first uses them, not through unexplained future helpers.</p>
+<h2 id="chapter-plan-and-implementation-hours">Chapter plan and implementation hours</h2>
+<p>The plan contains <strong>82.0 hours of scoped implementation plus 8.0 hours of debugging/integration reserve: 90.0 hours total</strong>. Chapter estimates already include ordinary exercises, local debugging, tests, and integration of that chapter's code. The reserve covers cross-cutting problems; it is not another charge for every test. Reading, course authoring, publication, downloads, and unattended compute are excluded. Active investigation of a failed run counts as implementation work.</p>
+<table>
+<thead>
+<tr>
+<th>Chapter</th>
+<th>Topic</th>
+<th style="text-align:right">Hours</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Native C builds and a debuggable numerical program</td>
+<td style="text-align:right">1.75</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Owned buffers, borrowed views, and failure cleanup</td>
+<td style="text-align:right">2.50</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Floating-point arithmetic and numerical derivatives</td>
+<td style="text-align:right">2.25</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Tensor layouts and reference matrix products</td>
+<td style="text-align:right">4.00</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Embeddings, stable loss, and elementary backward passes</td>
+<td style="text-align:right">3.50</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Blocked C kernels and meaningful timing</td>
+<td style="text-align:right">2.00</td>
+</tr>
+<tr>
+<td>7</td>
+<td>RMSNorm and residual gradient paths</td>
+<td style="text-align:right">3.00</td>
+</tr>
+<tr>
+<td>8</td>
+<td>SwiGLU and the two-branch backward pass</td>
+<td style="text-align:right">3.50</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Rotary positions as explicit coordinate transformations</td>
+<td style="text-align:right">2.50</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Causal grouped-query attention, forward</td>
+<td style="text-align:right">4.00</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Attention backward and shared-head accumulation</td>
+<td style="text-align:right">4.50</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Assemble and differentiate the complete decoder</td>
+<td style="text-align:right">4.50</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Byte text, shifted targets, and bounded data preparation</td>
+<td style="text-align:right">2.00</td>
+</tr>
+<tr>
+<td>14</td>
+<td>AdamW, accumulation, and gradient clipping</td>
+<td style="text-align:right">4.00</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Train, evaluate, checkpoint, and resume</td>
+<td style="text-align:right">6.00</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Inference workspaces and token sampling</td>
+<td style="text-align:right">3.00</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Prefill and incremental key/value caching</td>
+<td style="text-align:right">4.50</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Online normalization and tiled attention forward</td>
+<td style="text-align:right">5.00</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Recomputed tiled backward without a quadratic tape</td>
+<td style="text-align:right">7.00</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Import and validate pretrained weights</td>
+<td style="text-align:right">4.00</td>
+</tr>
+<tr>
+<td>21</td>
+<td>Tokenizer boundaries and pretrained reference agreement</td>
+<td style="text-align:right">3.50</td>
+</tr>
+<tr>
+<td>22</td>
+<td>End-to-end demonstration and measured tradeoffs</td>
+<td style="text-align:right">5.00</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>Scoped implementation</strong></td>
+<td style="text-align:right"><strong>82.00</strong></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>Cross-cutting debugging/integration reserve</strong></td>
+<td style="text-align:right"><strong>8.00</strong></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>Total</strong></td>
+<td style="text-align:right"><strong>90.00</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Each chapter below names its starting code, section outline, runnable result, and an indicative split of its hours. These are implementation estimates, not reading assignments. Record actual hands-on time as work proceeds and revise the remaining estimates from those observations. A long explanation does not make a short implementation task take longer.</p>
+<h3 id="chapter-1-native-c-builds-and-a-debuggable-numerical-program">Chapter 1 — Native C builds and a debuggable numerical program</h3>
+<p><strong>Prerequisites:</strong> Basic C expressions, loops, and functions. No existing project files.</p>
+<p><strong>Sections.</strong> Follow a source file through preprocessing, compilation, and linking; separate a declaration in <code>dot.h</code> from a definition in <code>dot.c</code>; use include guards, <code>const</code> pointer parameters, <code>size_t</code>, and correct formatted output; build a small program with <code>make</code>; inspect a value in LLDB; distinguish a compiler warning, a linker failure, and a runtime memory error. Introduce the flags before using them.</p>
+<p><strong>Build and run.</strong> Create the complete <code>examples/01-build/{dot.h,dot.c,main.c,Makefile}</code> program. Its normal case computes the dot product of <code>[1,2,3]</code> and <code>[4,5,6]</code> and prints <code>dot = 32</code>. A zero-length case and a deliberately isolated bad-access exercise expose the difference between an interface contract and a sanitizer diagnostic. Restore a clean passing build after the fault exercise; intentional undefined behavior is not left in the normal test target.</p>
+<p><strong>Outcome and effort.</strong> A runnable multi-file program with debug, sanitizer, and optimized configurations, plus a reproducible debugger session. Allocate 0.50 hours to setup/builds, 0.75 to the program, and 0.50 to diagnosis and checks. Technical reference: <a href="https://clang.llvm.org/docs/AddressSanitizer.html#usage">Clang's sanitizer usage</a>.</p>
+<h3 id="chapter-2-owned-buffers-borrowed-views-and-failure-cleanup">Chapter 2 — Owned buffers, borrowed views, and failure cleanup</h3>
+<p><strong>Prerequisites:</strong> Chapter 1's build and pointer interface.</p>
+<p><strong>Sections.</strong> Distinguish an array from a pointer and a pointer from an allocation; represent an owning buffer with a struct; express a non-owning view with pointer, extent, and stride; check <code>size_t</code> multiplication before allocation; initialize structs before cleanup; use status returns and a single cleanup path; explain aliasing and the limited promise made by <code>restrict</code> before any later optimization uses it.</p>
+<p><strong>Build and run.</strong> Create <code>examples/02-storage/{buffer.h,buffer.c,main.c,Makefile}</code>. Allocate six floats, fill a two-by-three matrix with <code>1</code> through <code>6</code>, borrow its second row, and print a row sum of <code>15</code>. Reject an overflowing size request without attempting that allocation. Exercise an injected allocation failure and free every successfully acquired buffer. A view never frees its owner, and the program does not read a view after owner destruction.</p>
+<p><strong>Outcome and effort.</strong> A complete storage example that establishes checked construction, unchanged output on failed construction, and cleanup conventions for the later engine. Allocate 1.50 hours to implementation and 1.00 to boundary cases, failure injection, and sanitizer checks.</p>
+<h3 id="chapter-3-floating-point-arithmetic-and-numerical-derivatives">Chapter 3 — Floating-point arithmetic and numerical derivatives</h3>
+<p><strong>Prerequisites:</strong> Chapters 1–2; no calculus assumed beyond ordinary algebra.</p>
+<p><strong>Sections.</strong> Contrast <code>float</code> storage and <code>double</code> accumulation; inspect limits with <code>&lt;float.h&gt;</code>; explain rounding, cancellation, infinity, and NaN; introduce a derivative as a small-change rate and the chain rule through a two-step scalar calculation; derive centered finite differences; combine absolute and relative error rather than divide blindly by a nearly zero reference.</p>
+<p><strong>Build and run.</strong> Create <code>examples/03-numerics/numerics.c</code> and its build target. Compare summation orders, demonstrate a shifted exponential sum, and sweep finite-difference steps for <span class="math-input" data-display="false">f(x)=x^3-2x</span> at <span class="math-input" data-display="false">x=1.5</span>, whose exact derivative is <span class="math-input" data-display="false">4.75</span>. Print the step, estimated derivative, and error so an excessively small step is visibly different from an incorrect derivative. A non-finite comparison is a failure, not a passing tolerance check.</p>
+<p><strong>Outcome and effort.</strong> A runnable numerical diagnostic and a reusable vocabulary for later gradient checks. Allocate 1.25 hours to the program and 1.00 to experiments and explanation-driven changes. Use the <a href="https://clang.llvm.org/docs/UsersManual.html#controlling-floating-point-behavior">Clang floating-point documentation</a> to connect compiler assumptions to observed behavior.</p>
+<h3 id="chapter-4-tensor-layouts-and-reference-matrix-products">Chapter 4 — Tensor layouts and reference matrix products</h3>
+<p><strong>Prerequisites:</strong> The three complete foundation examples.</p>
+<p><strong>Sections.</strong> Derive a flat offset from a shape; distinguish contiguous storage from a strided view; implement checked element/byte counts; flatten token rows without copying; derive matrix multiplication from a scalar dot product; fix weight orientation and leading dimensions; make overlap and overwrite rules explicit.</p>
+<p><strong>Build and run.</strong> Start <code>include/dl/</code>, <code>src/common.c</code>, <code>src/tensor.c</code>, <code>src/kernels.c</code>, the project <code>Makefile</code>, and <code>tests/test_kernels.c</code>. Implement the scalar forward product and the transpose combinations needed by later derivatives. A two-by-three input multiplied by a known two-by-three weight produces a two-by-two result that can be checked by hand. Include non-square shapes, an invalid dimension request, and guard values around output storage.</p>
+<p><strong>Outcome and effort.</strong> Owned tensors, borrowed views, and complete scalar products with checked public interfaces. These are purpose-built numerical routines, not a generic tensor-expression system. Allocate 2.75 hours to storage and kernels and 1.25 to layout traces, tests, and integration.</p>
+<h3 id="chapter-5-embeddings-stable-loss-and-elementary-backward-passes">Chapter 5 — Embeddings, stable loss, and elementary backward passes</h3>
+<p><strong>Prerequisites:</strong> Chapters 3–4 and the reference kernel test target.</p>
+<p><strong>Sections.</strong> Gather token rows from a table; accumulate repeated-token gradients; turn logits into probabilities with a maximum shift; compute mean next-token cross-entropy through log-sum-exp; derive the combined softmax/loss derivative; derive both linear-layer gradients and distinguish assigning a new gradient from adding another contribution.</p>
+<p><strong>Build and run.</strong> Extend <code>src/kernels.c</code>, add <code>src/loss.c</code>, and create <code>tests/test_loss.c</code> and <code>tests/gradcheck.c</code>. A tiny embedding–projection–loss program has completely specified weights and IDs. Repeated IDs must add into the same embedding row. Zero logits over four vocabulary entries have loss <span class="math-input" data-display="false">\log 4</span>. Large finite logits must not overflow simply because exponentiation was performed before subtracting the maximum.</p>
+<p><strong>Outcome and effort.</strong> Embedding, projection, and loss forward/backward routines with finite-difference checks. The checker perturbs actual stored values, restores them after each trial, and reports problematic coordinates. Allocate 2.25 hours to routines/derivations in code and 1.25 to gradient and boundary checks. The <a href="https://arxiv.org/html/1805.02867v1">stable-softmax construction</a> is a supporting reference.</p>
+<h3 id="chapter-6-blocked-c-kernels-and-meaningful-timing">Chapter 6 — Blocked C kernels and meaningful timing</h3>
+<p><strong>Prerequisites:</strong> Chapter 5's correct scalar forward and backward products.</p>
+<p><strong>Sections.</strong> Relate loop ordering to contiguous loads; tile output and reduction dimensions; handle tail tiles; preserve accumulation across reduction tiles; use an explicit backend enum; separate correctness builds from measurement builds; measure repeated work without timing printing or setup.</p>
+<p><strong>Build and run.</strong> Add blocked implementations to <code>src/kernels.c</code> and a kernel mode to <code>app/compare.c</code>. Check forward products, input-gradient products, and weight-gradient products against the scalar versions. Use awkward dimensions that are not multiples of a block size. A test of nonzero initial output catches accidentally clearing an accumulation target on every tile.</p>
+<p><strong>Outcome and effort.</strong> A fully C optimized baseline that remains interchangeable with the reference. Print dimensions, backend, iteration count, elapsed time, and numerical error; do not assume blocking is faster for every shape. No Accelerate dependency enters here. Allocate 1.25 hours to blocked kernels and dispatch and 0.75 to equivalence checks and timing.</p>
+<h3 id="chapter-7-rmsnorm-and-residual-gradient-paths">Chapter 7 — RMSNorm and residual gradient paths</h3>
+<p><strong>Prerequisites:</strong> Chapters 3–6, including additive gradient interfaces.</p>
+<p><strong>Sections.</strong> Normalize one token row without subtracting its mean; place epsilon inside the square root; separate the direct scaling derivative from the derivative of the denominator; accumulate scale gradients across rows; trace an identity residual path alongside a learned path; decide which forward intermediates must remain alive.</p>
+<p><strong>Build and run.</strong> Add <code>src/norm.c</code>, its header, and normalization/residual cases in <code>tests/test_ops.c</code>. Work a two-coordinate row by hand, then check input and scale gradients numerically. Test a zero row with positive epsilon and two callers contributing to the same gradient buffer. Removing the denominator's derivative must produce a failing check rather than a superficially plausible result.</p>
+<p><strong>Outcome and effort.</strong> Complete RMSNorm forward/backward and residual-addition gradient rules that can be composed without losing a contribution. Allocate 2.00 hours to implementation and 1.00 to traces and checks. Technical basis: <a href="https://arxiv.org/html/1910.07467v1">RMSNorm Sections 4 and 4.2</a>; the decoder uses a scale-only, epsilon-stabilized version.</p>
+<h3 id="chapter-8-swiglu-and-the-two-branch-backward-pass">Chapter 8 — SwiGLU and the two-branch backward pass</h3>
+<p><strong>Prerequisites:</strong> Chapters 5–7 and the linear-gradient routines.</p>
+<p><strong>Sections.</strong> Define sigmoid and SiLU with numerically stable evaluation; form independent gate and value projections; multiply their coordinates; project the product back to model width; derive both branch gradients and the SiLU derivative; choose saved buffers instead of destroying values needed in backward.</p>
+<p><strong>Build and run.</strong> Add <code>src/ffn.c</code> and feed-forward tests. A tiny row passes through all three weight matrices, with intermediate gate, value, and product arrays visible. Check gradients with respect to the input and each matrix. Use positive, negative, and near-zero gate inputs; a mistaken derivative that differentiates only the gate branch must fail.</p>
+<p><strong>Outcome and effort.</strong> A complete bias-free SwiGLU sublayer, not merely a SiLU activation routine. Allocate 2.25 hours to connected forward/backward code and 1.25 to finite differences, buffer-lifetime checks, and integration. Technical basis: <a href="https://arxiv.org/html/2002.05202v1">GLU Variants, equations 5–6</a>.</p>
+<h3 id="chapter-9-rotary-positions-as-explicit-coordinate-transformations">Chapter 9 — Rotary positions as explicit coordinate transformations</h3>
+<p><strong>Prerequisites:</strong> Chapters 3–5 and tensor views from Chapter 4. Chapter 8 is the current sequential code state.</p>
+<p><strong>Sections.</strong> Derive a two-dimensional rotation; connect relative position to rotated query/key dot products; generalize to an even head width; distinguish split-half pairing from adjacent-coordinate pairing; generate frequencies and position-dependent angles; derive backward as multiplication by the rotation transpose.</p>
+<p><strong>Build and run.</strong> Add <code>src/rope.c</code> and rotation tests. Check position zero, a known quarter-turn pair, norm preservation within floating-point tolerance, and a backward finite difference. Compare a dot product after shifting both positions by the same offset. Reject an odd head width rather than silently leaving a coordinate untreated.</p>
+<p><strong>Outcome and effort.</strong> Explicit forward and backward rotations with an absolute position argument, ready for both full-sequence attention and cached decoding. Values are not rotated. Allocate 1.50 hours to routines and 1.00 to position/layout checks. Technical basis: <a href="https://arxiv.org/html/2104.09864v5">RoFormer Sections 3.1–3.2</a>; the <a href="https://huggingface.co/HuggingFaceTB/SmolLM2-135M/raw/main/config.json">checkpoint configuration</a> specifies the selected pairing convention.</p>
+<h3 id="chapter-10-causal-grouped-query-attention-forward">Chapter 10 — Causal grouped-query attention, forward</h3>
+<p><strong>Prerequisites:</strong> Chapters 4–9; stable normalization and positional rotations are already implemented.</p>
+<p><strong>Sections.</strong> Form query, key, and value projections; map each query head to a shared key/value head; scale query/key dot products; mask future positions before normalization; accumulate a weighted value vector; concatenate head results and apply the output projection. Follow a two-token example before introducing longer sequences.</p>
+<p><strong>Build and run.</strong> Add the materialized path in <code>src/attention_ref.c</code> and <code>tests/test_attention.c</code>. Keep its score/probability arrays visible for inspection. A one-token row has probability one. Changing a future token cannot change an earlier output. Check several query heads sharing one key/value head without duplicating the actual key/value storage.</p>
+<p><strong>Outcome and effort.</strong> A complete causal attention sublayer with declared saved buffers for backward. Invalid shapes and empty permitted-key sets are diagnosed explicitly; diagonal self-attention gives every normal row at least one allowed key. Allocate 2.75 hours to projections, masking, and layout plumbing and 1.25 to numerical traces and tests. Technical basis: <a href="https://arxiv.org/html/2305.13245v3">GQA Section 2.2</a>.</p>
+<h3 id="chapter-11-attention-backward-and-shared-head-accumulation">Chapter 11 — Attention backward and shared-head accumulation</h3>
+<p><strong>Prerequisites:</strong> Chapter 10's complete materialized forward path and Chapters 5–9's derivative interfaces.</p>
+<p><strong>Sections.</strong> Reverse the weighted sum; derive the softmax row derivative without allocating its Jacobian; reverse scaled dot products; sum key/value contributions from every sharing query head; reverse rotations and projection matrices; identify where a gradient buffer is zeroed once and where it is subsequently incremented.</p>
+<p><strong>Build and run.</strong> Extend <code>src/attention_ref.c</code> and the attention/gradient tests. Compare query, key, value, input, and projection-weight gradients on a small causal sequence. Check that masked score gradients vanish. Exercise the one-key/value-head and one-key/value-head-per-query-head endpoints using matched effective tensors, not unrelated randomly initialized models.</p>
+<p><strong>Outcome and effort.</strong> The materialized attention implementation becomes an executable derivative reference for later memory optimization. Allocate 3.00 hours to the complete backward path and 1.50 to shared-head, mask, and finite-difference checks. Supporting derivation: <a href="https://arxiv.org/html/2205.14135v2">FlashAttention Appendix B.2 and its standard backward algorithm</a>.</p>
+<h3 id="chapter-12-assemble-and-differentiate-the-complete-decoder">Chapter 12 — Assemble and differentiate the complete decoder</h3>
+<p><strong>Prerequisites:</strong> All operator code through Chapter 11 and the gradient checker.</p>
+<p><strong>Sections.</strong> Validate model configuration; enumerate unique parameters in a stable order; initialize weights with explicit random state and norm scales; compose residual blocks and the final projection; allocate a training tape of saved intermediates; reverse the block sequence; merge the two gradients of the tied embedding table.</p>
+<p><strong>Build and run.</strong> Add <code>src/model.c</code>, <code>src/rng.c</code>, matching headers, <code>configs/tiny.conf</code>, and <code>tests/test_model.c</code>. The diagnostic configuration uses one block, width 16, four query heads, two key/value heads, feed-forward width 40, vocabulary 16, and four tokens. Introduce unsigned random-state operations and the initialization rule before relying on them. Check selected coordinates from every parameter family and a whole-model directional derivative, not millions of finite differences.</p>
+<p><strong>Outcome and effort.</strong> One C forward/backward call produces loss and all unique parameter gradients. A small, fully implemented plain-gradient update is a smoke check; the sustained optimizer follows in Chapter 14. Allocate 3.00 hours to composition, initialization, and parameter ownership and 1.50 to gradient integration and diagnostics. Do not use a plausible scalar loss as the only check of the assembled model.</p>
+<h3 id="chapter-13-byte-text-shifted-targets-and-bounded-data-preparation">Chapter 13 — Byte text, shifted targets, and bounded data preparation</h3>
+<p><strong>Prerequisites:</strong> Chapter 12's model interface and explicit random state.</p>
+<p><strong>Sections.</strong> Distinguish bytes, Unicode characters, and tokenizer IDs; open/read/close files with checked results; construct input/target windows with a one-byte shift; keep validation separate from sampled training windows; preserve raw bytes while displaying text safely; bound preparation by bytes as well as record count.</p>
+<p><strong>Build and run.</strong> Add <code>src/data.c</code>, <code>tests/test_data.c</code>, and <code>scripts/prepare_data.py</code>. Begin with a tiny local ASCII fixture whose windows are printed and checked. Then prepare at most 16 MiB of training text and 1 MiB of validation text from their respective <a href="https://huggingface.co/datasets/roneneldan/TinyStories/raw/main/README.md">TinyStories splits</a>, stopping at record boundaries and retaining source/revision and license information. Use <a href="https://huggingface.co/docs/datasets/stream">streaming preparation</a> rather than requiring the full corpus. The C loader samples and batches the resulting local bytes.</p>
+<p><strong>Outcome and effort.</strong> Bounded train/validation files and a deterministic C batch iterator. Byte IDs are exactly 0–255: there is no invented byte-model BOS/EOS or padding token. The file must contain at least <span class="math-input" data-display="false">T+1</span> bytes. Allocate 1.25 hours to preparation and the loader and 0.75 to target alignment, short-file failures, and split checks.</p>
+<h3 id="chapter-14-adamw-accumulation-and-gradient-clipping">Chapter 14 — AdamW, accumulation, and gradient clipping</h3>
+<p><strong>Prerequisites:</strong> Chapter 12's unique parameter directory and Chapter 13's batches.</p>
+<p><strong>Sections.</strong> Track first and second moments; apply bias corrections using update count; separate weight decay from the loss gradient; accumulate a token-weighted mean across microbatches; clip the global gradient norm after accumulation; define schedule state and the precise point at which gradients are cleared.</p>
+<p><strong>Build and run.</strong> Add <code>src/optim.c</code> and <code>tests/test_optim.c</code>. Verify scalar updates against hand-calculated values. Compare one combined batch with equivalent microbatches before and after an update. A repeated embedding/output parameter must appear once in optimizer iteration. Matrix weights, including the shared table, receive the configured decay once; RMSNorm scales do not. Detect non-finite gradients before modifying optimizer state.</p>
+<p><strong>Outcome and effort.</strong> A checked update step whose meaning does not depend accidentally on the number of accumulation calls. The initial training setting uses four microbatches per update: <span class="math-input" data-display="false">2\times128\times4=1024</span> target tokens. Allocate 2.50 hours to state/update logic and 1.50 to normalization, clipping, and reference checks. Technical basis: <a href="https://arxiv.org/html/1711.05101v3">AdamW Algorithm 2</a>; the implementation states its learning-rate/decay convention explicitly.</p>
+<h3 id="chapter-15-train-evaluate-checkpoint-and-resume">Chapter 15 — Train, evaluate, checkpoint, and resume</h3>
+<p><strong>Prerequisites:</strong> Chapters 12–14, including a complete backward path and checked file I/O.</p>
+<p><strong>Sections.</strong> Integrate a complete update loop; distinguish training and held-out evaluation; first overfit one fixed batch, then run a text pilot; implement a simple warmup/decay schedule; define a versioned little-endian checkpoint rather than dumping C structs; serialize all state required for the next update; validate before replacing live state; handle partial reads/writes and failed saves.</p>
+<p><strong>Build and run.</strong> Add <code>app/train.c</code>, <code>src/checkpoint.c</code>, <code>configs/byte-small.conf</code>, and checkpoint/training tests. Save unique weights, both optimizer moments, update count, schedule/hyperparameters, data-position/random state, and configuration. Checkpoints are written at completed update boundaries, so partially accumulated gradients are not an implicit missing dependency. Resume tests compare the next batches and updates with uninterrupted execution on the same build/backend. A truncated or incompatible file must be rejected without destroying the currently usable model.</p>
+<p><strong>Outcome and effort.</strong> Actual C text training, a held-out loss measurement, and restartable progress. Run a short pilot before selecting the longer token budget; do not promise a particular loss or throughput. Allocate 2.00 hours to the loop/evaluation, 2.00 to checkpoint/resume, and 2.00 to active debugging and tests. Unattended training is additional elapsed machine time.</p>
+<h3 id="chapter-16-inference-workspaces-and-token-sampling">Chapter 16 — Inference workspaces and token sampling</h3>
+<p><strong>Prerequisites:</strong> Chapter 15's trained weights, validated loader, and model configuration.</p>
+<p><strong>Sections.</strong> Execute a forward pass without training gradients, moments, or a full training tape; reuse layer workspace; compute only the vocabulary scores required by the caller; establish full-prefix generation as a baseline; implement greedy and temperature-based categorical selection; separate random state from model state.</p>
+<p><strong>Build and run.</strong> Add <code>src/inference.c</code>, <code>src/sample.c</code>, <code>app/generate.c</code>, and sampling/inference checks. Compare inference logits with the training forward path on fixed weights and IDs. With a prescribed uniform draw, a small categorical distribution must select a known interval. Define positive-temperature validation, greedy tie handling, and a maximum generated-token count. Write generated bytes unchanged to a file; escaped terminal display is only a presentation layer.</p>
+<p><strong>Outcome and effort.</strong> A functioning C generator before any cache optimization, with a baseline against which incremental decoding can be checked. Allocate 2.00 hours to workspace/logit selection/sampling and 1.00 to probability boundaries and end-to-end tests. Top-k, top-p, beam search, and interactive serving are not required features.</p>
+<h3 id="chapter-17-prefill-and-incremental-keyvalue-caching">Chapter 17 — Prefill and incremental key/value caching</h3>
+<p><strong>Prerequisites:</strong> Chapters 9–11 and Chapter 16's inference-only full-prefix baseline.</p>
+<p><strong>Sections.</strong> Distinguish processing an initial prompt from appending one token; allocate per-layer shared-head caches; rotate a key once at its absolute position; attend over the committed prefix and the new token; define reset/capacity behavior; separate tentative writes from the public committed length.</p>
+<p><strong>Build and run.</strong> Add <code>src/cache.c</code> and <code>tests/test_cache.c</code>; extend inference and generation. A full-prompt prefill initializes every layer's key/value history. Each decode step consumes one token and returns logits for the following token. Compare the logits at every tested prefix against full-prefix recomputation. Test one-token prompts, independent resets, exact capacity, and an attempted append past capacity.</p>
+<p><strong>Outcome and effort.</strong> Correct stateful decoding with no recomputation of old keys and values. Validate and provision workspace before mutation; advance length only after all layers complete. A failed step can leave an unreachable tentative suffix, but must not corrupt committed entries or claim a new valid length. Allocate 3.00 hours to prefill/decode/state transitions and 1.50 to equivalence and failure checks. No sliding-window eviction or batched variable-length serving is added.</p>
+<h3 id="chapter-18-online-normalization-and-tiled-attention-forward">Chapter 18 — Online normalization and tiled attention forward</h3>
+<p><strong>Prerequisites:</strong> Chapter 10's materialized attention and Chapter 17's working inference path.</p>
+<p><strong>Sections.</strong> Maintain a running maximum, scaled normalization sum, and weighted-value numerator; rescale old contributions when the maximum changes; merge a score tile into that state; generate scores from query/key tiles rather than accept a prebuilt square matrix; handle causal diagonal tiles and incomplete tiles; save each row's log-sum-exp.</p>
+<p><strong>Build and run.</strong> Add the forward path in <code>src/attention_tiled.c</code> and <code>tests/test_tiled.c</code>. First reproduce a three-key worked row, then compare complete causal grouped-query outputs. Start with query tiles of 16 rows and key tiles of 32 columns; vary both, including tails. Skip wholly masked tiles without forming an undefined difference of negative infinities. Count live temporary storage instead of reporting only the size of one tile.</p>
+<p><strong>Outcome and effort.</strong> An inference-capable bounded-tile attention forward pass with no full score/probability allocation. Training still uses the materialized forward/backward pair until Chapter 19. Allocate 3.25 hours to online state and tiled computation and 1.75 to equivalence, masking, and allocation checks. Technical basis: <a href="https://arxiv.org/html/1805.02867v1">online normalization, Section 3</a>, and <a href="https://arxiv.org/html/2205.14135v2">FlashAttention Section 3.1</a>.</p>
+<h3 id="chapter-19-recomputed-tiled-backward-without-a-quadratic-tape">Chapter 19 — Recomputed tiled backward without a quadratic tape</h3>
+<p><strong>Prerequisites:</strong> Chapter 11's materialized derivatives, Chapter 18's tiled outputs/statistics, and Chapter 15's trainer.</p>
+<p><strong>Sections.</strong> Reconstruct probabilities from a score tile and saved row normalization; obtain the softmax reduction from the output/output-gradient dot product; accumulate value, query, and key gradients in bounded tiles; retain the score-scale factor; combine contributions from shared heads; remove the quadratic attention tape from the tiled training mode.</p>
+<p><strong>Build and run.</strong> Complete <code>src/attention_tiled.c</code>, extend <code>tests/test_tiled.c</code>, and connect the paired tiled backend to training. Compare all three input gradients with the materialized reference, then use tiny finite differences and a whole-model update comparison. Test single-token rows, lengths crossing tile boundaries, several tile sizes, and several head-sharing ratios. The tests intentionally distinguish a missing shared-head contribution from an ordinary rounding difference.</p>
+<p><strong>Outcome and effort.</strong> Exact attention training without retained full probability or score-gradient matrices. Saved query/key/value arrays and output still occupy linear storage; “no quadratic tape” does not mean “no saved activations.” Allocate 4.50 hours to the backward algorithm and tape integration and 2.50 to gradient, memory, and training regression checks. Technical basis: <a href="https://arxiv.org/html/2205.14135v2">FlashAttention Appendix B.2–B.4</a>.</p>
+<h3 id="chapter-20-import-and-validate-pretrained-weights">Chapter 20 — Import and validate pretrained weights</h3>
+<p><strong>Prerequisites:</strong> Chapter 15's file format/loader, Chapter 17's inference path, and the complete operators through Chapter 19.</p>
+<p><strong>Sections.</strong> Inspect a specific model revision and tensor inventory; map named tensors to the engine's parameter directory; expand BF16 storage to FP32 without changing tensor meaning; preserve matrix orientation, tied weights, normalization epsilon, and RoPE settings; distinguish a weight-only file from a resumable training checkpoint; reject unsupported architecture features.</p>
+<p><strong>Build and run.</strong> Add <code>scripts/export_smollm2.py</code>, an imported configuration, and loader fixtures. Reuse and extend <code>src/checkpoint.c</code> rather than introduce an unrelated weight-loading system. Convert incrementally, accounting for temporary copies. Before a large load, exercise small malformed files with wrong shapes, duplicated/missing tensors, invalid offsets/counts, and truncation. The imported model allocates no gradients or Adam moments.</p>
+<p><strong>Outcome and effort.</strong> SmolLM2-135M weights owned and executable by the C inference engine, with an explicit tensor mapping and bounded loader. No claim of correct model output is made until the next chapter's independent comparison. Allocate 2.50 hours to conversion/mapping and 1.50 to validation and load-memory checks. References: <a href="https://huggingface.co/HuggingFaceTB/SmolLM2-135M/raw/main/config.json">official configuration</a> and <a href="https://huggingface.co/docs/safetensors/metadata_parsing">Safetensors metadata format</a>.</p>
+<h3 id="chapter-21-tokenizer-boundaries-and-pretrained-reference-agreement">Chapter 21 — Tokenizer boundaries and pretrained reference agreement</h3>
+<p><strong>Prerequisites:</strong> Chapter 20's imported weights and Chapter 17's cache checks.</p>
+<p><strong>Sections.</strong> Fix the tokenizer revision and special-token policy; distinguish byte-model IDs from pretrained vocabulary IDs; export prompt IDs without hidden preprocessing; align reference and C precision/layout; compare logits before samples; inspect the first divergent intermediate; compare cached and uncached continuations under identical token prefixes.</p>
+<p><strong>Build and run.</strong> Add <code>scripts/tokenize.py</code>, <code>scripts/reference_smollm2.py</code>, and comparison support in <code>app/compare.c</code>. Python emits IDs and independent expected values; C performs every model operation and selects generated IDs; Python decodes the resulting IDs afterward. The checker uses the same source weights expanded to FP32 and a compatible unfused/eager reference path where supported. Record its actual library version and settings rather than requiring the version named in historical checkpoint metadata.</p>
+<p><strong>Outcome and effort.</strong> Short pretrained continuations with measured logit error and localized intermediate checks. A matching greedy token is insufficient evidence when the rest of the vocabulary scores disagree; conversely, near-tied logits can change a sampled continuation. Allocate 2.00 hours to tokenizer/reference plumbing and 1.50 to numerical comparison and diagnosis. References: <a href="https://huggingface.co/HuggingFaceTB/SmolLM2-135M/raw/main/config.json">model configuration</a> and <a href="https://huggingface.co/docs/transformers/main/model_doc/llama">the Llama reference API</a>.</p>
+<h3 id="chapter-22-end-to-end-demonstration-and-measured-tradeoffs">Chapter 22 — End-to-end demonstration and measured tradeoffs</h3>
+<p><strong>Prerequisites:</strong> The complete program through Chapter 21, including the trained byte-model checkpoint and imported pretrained weights.</p>
+<p><strong>Sections.</strong> Run the training/resume/generation demonstration from documented inputs; compare scalar and blocked products; measure prefill separately from one-token decode; compare materialized and tiled attention across sequence lengths; account for arrays and process memory separately; distinguish numerical error, overhead, and useful work; document the actual machine/build/run settings.</p>
+<p><strong>Build and run.</strong> Finish <code>app/compare.c</code>, a small <code>scripts/run_demo.sh</code>, and a concise <code>runs/README.md</code> describing local commands and generated result files. Measure each memory mode in a separate process so retained reference buffers do not contaminate the tiled result. Use deterministic input fixtures, warmups, repeated timings, and numerical checks before interpreting a speed difference. Keep results small: loss by processed tokens, representative output/error checks, and a compact timing/memory table.</p>
+<p><strong>Outcome and effort.</strong> A repeatable local demonstration of both model configurations and the implemented memory tradeoff. Allocate 2.00 hours to integration, 1.50 to measurements, and 0.75 to diagnosis/documented reruns. Use the remaining 0.75 hours for either an optional <code>src/accelerate.c</code> adapter comparison or a deeper C tile/shape sweep. The optional adapter uses <a href="https://developer.apple.com/documentation/accelerate/cblas_sgemm(_:_:_:_:_:_:_:_:_:_:_:_:_:_:)">Apple's single-precision matrix product</a> only after the C kernels and their derivatives are understood. No particular speedup is a completion condition.</p>
+<h2 id="milestones-and-scope-boundaries">Milestones and scope boundaries</h2>
+<p>The dependency path is cumulative: foundation programs precede tensor kernels; verified operators precede the model; a working materialized trainer precedes cache and tiled optimizations; correct C inference precedes imported-model comparison. The narrower prerequisites named above identify interfaces that need rereading, not permission to assume unwritten future infrastructure.</p>
+<table>
+<thead>
+<tr>
+<th>After</th>
+<th>Runnable capability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chapter 3</td>
+<td>Three independent C foundation programs with memory/numerical checks</td>
+</tr>
+<tr>
+<td>Chapter 6</td>
+<td>Tensor primitives and scalar/blocked forward/backward products</td>
+</tr>
+<tr>
+<td>Chapter 12</td>
+<td>A complete decoder with manually checked parameter gradients</td>
+</tr>
+<tr>
+<td>Chapter 15</td>
+<td>Actual byte-text training, held-out evaluation, and checkpoint resume</td>
+</tr>
+<tr>
+<td>Chapter 17</td>
+<td>Full-prefix, prefill, and incremental decoding with matching logits</td>
+</tr>
+<tr>
+<td>Chapter 19</td>
+<td>Tiled attention forward/backward and a comparable model update</td>
+</tr>
+<tr>
+<td>Chapter 21</td>
+<td>Imported pretrained inference with independent numerical comparison</td>
+</tr>
+<tr>
+<td>Chapter 22</td>
+<td>The combined demonstration and actual timing/memory observations</td>
+</tr>
+</tbody>
+</table>
+<p>The required implementation is deliberately single-process and CPU-first. It includes neither mixed-precision training nor hand-written vector intrinsics, a general tokenizer, automatic differentiation, distributed training, serving infrastructure, quantization, low-rank adapters, beam search, or sliding-window cache eviction. This leaves room to implement and diagnose the central forward/backward, ownership, optimizer, and cache mechanisms rather than replace them with dependencies.</p>
+<p>Correctness checks move from hand-calculated scalars to operator finite differences, complete-model directional checks, state/resume checks, and independent pretrained comparisons. Tolerances are chosen and explained with each check; one unexplained global threshold is not used for every tensor. Training loss, token counts, and generated examples are interpreted with their tokenizer and data boundaries. In particular, raw perplexities from the byte model and the pretrained tokenizer are not treated as directly comparable quality scores.</p>
+<h2 id="technical-references">Technical references</h2>
+<p>These sources support the named mechanisms and interfaces. The implementation chapters derive the necessary equations and supply their code; reading a linked paper is not a substitute for a missing implementation step.</p>
+<p><strong>Architecture and operators.</strong> Touvron et al., <a href="https://arxiv.org/html/2302.13971v1"><em>LLaMA</em>, version 1, Section 2.2</a>; Zhang and Sennrich, <a href="https://arxiv.org/html/1910.07467v1"><em>Root Mean Square Layer Normalization</em>, version 1, Sections 4 and 4.2</a>; Su et al., <a href="https://arxiv.org/html/2104.09864v5"><em>RoFormer</em>, version 5, Sections 3.1–3.2</a>; Shazeer, <a href="https://arxiv.org/html/2002.05202v1"><em>GLU Variants Improve Transformer</em>, version 1, equations 5–6</a>; Ainslie et al., <a href="https://arxiv.org/html/2305.13245v3"><em>GQA</em>, version 3, Section 2.2</a>.</p>
+<p><strong>Optimization and attention memory.</strong> Loshchilov and Hutter, <a href="https://arxiv.org/html/1711.05101v3"><em>Decoupled Weight Decay Regularization</em>, version 3, Algorithm 2</a>; Milakov and Gimelshein, <a href="https://arxiv.org/html/1805.02867v1"><em>Online normalizer calculation for softmax</em>, version 1, Section 3</a>; Dao et al., <a href="https://arxiv.org/html/2205.14135v2"><em>FlashAttention</em>, version 2, Section 3.1 and Appendix B</a>.</p>
+<p><strong>Model and data interfaces.</strong> HuggingFaceTB's <a href="https://huggingface.co/HuggingFaceTB/SmolLM2-135M/raw/main/config.json">SmolLM2-135M configuration</a>; the authors' <a href="https://huggingface.co/datasets/roneneldan/TinyStories/raw/main/README.md">TinyStories dataset card</a>; Hugging Face's <a href="https://huggingface.co/docs/datasets/stream">streaming guide</a>, <a href="https://huggingface.co/docs/safetensors/metadata_parsing">Safetensors metadata documentation</a>, and <a href="https://huggingface.co/docs/transformers/main/model_doc/llama">Llama reference API</a>. Model/data revisions and installed checker versions are recorded during asset preparation rather than assumed from a mutable web page.</p>
+<p><strong>Native implementation tools.</strong> <a href="https://developer.apple.com/xcode/resources/">Apple's Xcode and command-line tool resources</a>; <a href="https://clang.llvm.org/docs/AddressSanitizer.html#usage">Clang AddressSanitizer usage</a>; <a href="https://clang.llvm.org/docs/UsersManual.html#controlling-floating-point-behavior">Clang floating-point semantics</a>; <a href="https://developer.apple.com/documentation/accelerate/cblas_sgemm(_:_:_:_:_:_:_:_:_:_:_:_:_:_:)">Apple Accelerate <code>cblas_sgemm</code></a>. These are interface and feature references, not mandates to install a specific toolchain release.</p>
+</article>
+<nav class="pager" aria-label="Previous and next chapters"><a href="chapter-01.html"><small>Next · Chapter 1</small><span>Native C builds and a debuggable numerical program</span></a></nav>
+<footer>Modern Language Models in C · Roadmap</footer>
+</main>
+<aside class="page-toc" aria-label="In this chapter"><div class="toc-title">In this chapter</div><ul><li class="toc-h2"><a href="#what-the-completed-program-does">What the completed program does</a></li><li class="toc-h2"><a href="#starting-knowledge-and-native-tools">Starting knowledge and native tools</a></li><li class="toc-h2"><a href="#one-architecture-two-configurations">One architecture, two configurations</a></li><li class="toc-h3"><a href="#dimensions-and-tensor-conventions">Dimensions and tensor conventions</a></li><li class="toc-h3"><a href="#ownership-state-and-dependency-boundaries">Ownership, state, and dependency boundaries</a></li><li class="toc-h2"><a href="#resource-envelope-and-useful-measurements">Resource envelope and useful measurements</a></li><li class="toc-h2"><a href="#implementation-layout">Implementation layout</a></li><li class="toc-h2"><a href="#chapter-plan-and-implementation-hours">Chapter plan and implementation hours</a></li><li class="toc-h3"><a href="#chapter-1-native-c-builds-and-a-debuggable-numerical-program">Chapter 1 — Native C builds and a debuggable numerical program</a></li><li class="toc-h3"><a href="#chapter-2-owned-buffers-borrowed-views-and-failure-cleanup">Chapter 2 — Owned buffers, borrowed views, and failure cleanup</a></li><li class="toc-h3"><a href="#chapter-3-floating-point-arithmetic-and-numerical-derivatives">Chapter 3 — Floating-point arithmetic and numerical derivatives</a></li><li class="toc-h3"><a href="#chapter-4-tensor-layouts-and-reference-matrix-products">Chapter 4 — Tensor layouts and reference matrix products</a></li><li class="toc-h3"><a href="#chapter-5-embeddings-stable-loss-and-elementary-backward-passes">Chapter 5 — Embeddings, stable loss, and elementary backward passes</a></li><li class="toc-h3"><a href="#chapter-6-blocked-c-kernels-and-meaningful-timing">Chapter 6 — Blocked C kernels and meaningful timing</a></li><li class="toc-h3"><a href="#chapter-7-rmsnorm-and-residual-gradient-paths">Chapter 7 — RMSNorm and residual gradient paths</a></li><li class="toc-h3"><a href="#chapter-8-swiglu-and-the-two-branch-backward-pass">Chapter 8 — SwiGLU and the two-branch backward pass</a></li><li class="toc-h3"><a href="#chapter-9-rotary-positions-as-explicit-coordinate-transformations">Chapter 9 — Rotary positions as explicit coordinate transformations</a></li><li class="toc-h3"><a href="#chapter-10-causal-grouped-query-attention-forward">Chapter 10 — Causal grouped-query attention, forward</a></li><li class="toc-h3"><a href="#chapter-11-attention-backward-and-shared-head-accumulation">Chapter 11 — Attention backward and shared-head accumulation</a></li><li class="toc-h3"><a href="#chapter-12-assemble-and-differentiate-the-complete-decoder">Chapter 12 — Assemble and differentiate the complete decoder</a></li><li class="toc-h3"><a href="#chapter-13-byte-text-shifted-targets-and-bounded-data-preparation">Chapter 13 — Byte text, shifted targets, and bounded data preparation</a></li><li class="toc-h3"><a href="#chapter-14-adamw-accumulation-and-gradient-clipping">Chapter 14 — AdamW, accumulation, and gradient clipping</a></li><li class="toc-h3"><a href="#chapter-15-train-evaluate-checkpoint-and-resume">Chapter 15 — Train, evaluate, checkpoint, and resume</a></li><li class="toc-h3"><a href="#chapter-16-inference-workspaces-and-token-sampling">Chapter 16 — Inference workspaces and token sampling</a></li><li class="toc-h3"><a href="#chapter-17-prefill-and-incremental-keyvalue-caching">Chapter 17 — Prefill and incremental key/value caching</a></li><li class="toc-h3"><a href="#chapter-18-online-normalization-and-tiled-attention-forward">Chapter 18 — Online normalization and tiled attention forward</a></li><li class="toc-h3"><a href="#chapter-19-recomputed-tiled-backward-without-a-quadratic-tape">Chapter 19 — Recomputed tiled backward without a quadratic tape</a></li><li class="toc-h3"><a href="#chapter-20-import-and-validate-pretrained-weights">Chapter 20 — Import and validate pretrained weights</a></li><li class="toc-h3"><a href="#chapter-21-tokenizer-boundaries-and-pretrained-reference-agreement">Chapter 21 — Tokenizer boundaries and pretrained reference agreement</a></li><li class="toc-h3"><a href="#chapter-22-end-to-end-demonstration-and-measured-tradeoffs">Chapter 22 — End-to-end demonstration and measured tradeoffs</a></li><li class="toc-h2"><a href="#milestones-and-scope-boundaries">Milestones and scope boundaries</a></li><li class="toc-h2"><a href="#technical-references">Technical references</a></li></ul></aside>
+</div></body></html>

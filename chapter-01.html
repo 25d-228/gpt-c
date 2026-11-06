@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 1 — Native C builds and a debuggable numerical program · Modern Language Models in C</title>
+<meta name="description" content="A C decoder laboratory: explicit tensor layouts, manual gradients, small-model training, cached inference, and exact tiled attention.">
+<link rel="canonical" href="https://25d-228.github.io/gpt-c/chapter-01.html">
+<link rel="stylesheet" href="assets/code-light.css">
+<link rel="stylesheet" href="assets/course.css">
+<script>window.MathJax = {startup: {typeset: false}, options: {enableMenu: false}, svg: {fontCache: "local"}};</script>
+<script defer src="assets/vendor/tex-svg.js"></script>
+<script defer src="assets/course.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to chapter</a>
+<header class="topbar"><a class="brand" href="index.html"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 7C10 3 5 4 2 5v17c4-2 8-1 12 2m0-17c4-4 9-3 12-2v17c-4-2-8-1-12 2V7Z"/></svg><span>Modern Language Models in C</span></a>
+<div class="header-actions"><a class="desktop-link" href="index.html">Overview</a><a class="desktop-link" href="chapter-01.html">Chapters</a><a class="desktop-link" href="https://github.com/25d-228/gpt-c">Repository</a><button id="menu-toggle" type="button" aria-expanded="false" aria-controls="chapter-nav">Contents</button></div></header>
+<div class="book-layout">
+<aside class="sidebar" id="chapter-nav"><h2 class="sidebar-title">Contents</h2>
+<label for="chapter-filter">Find a chapter</label><input id="chapter-filter" type="search" placeholder="Search chapter titles…" autocomplete="off">
+<nav aria-label="Chapters"><ol><li><a href="index.html"><span class="chapter-label">Roadmap</span><span>Decoder Laboratory in C</span></a></li><li><a href="chapter-01.html" aria-current="page"><span class="chapter-label">Chapter 1</span><span>Native C builds and a debuggable numerical program</span></a></li><li><a href="chapter-02.html"><span class="chapter-label">Chapter 2</span><span>Owned buffers, borrowed views, and failure cleanup</span></a></li><li><a href="chapter-03.html"><span class="chapter-label">Chapter 3</span><span>Floating-point arithmetic and numerical derivatives</span></a></li><li><a href="chapter-04.html"><span class="chapter-label">Chapter 4</span><span>Tensor layouts and reference matrix products</span></a></li><li><a href="chapter-05.html"><span class="chapter-label">Chapter 5 · Part 1</span><span>Embeddings, stable loss, and elementary backward passes</span></a></li><li><a href="chapter-05-part-2.html"><span class="chapter-label">Chapter 5 · Part 2</span><span>Checking gradients and numerical failures</span></a></li><li><a href="chapter-06.html"><span class="chapter-label">Chapter 6 · Part 1</span><span>Blocked C kernels and meaningful timing</span></a></li><li><a href="chapter-06-part-2.html"><span class="chapter-label">Chapter 6 · Part 2</span><span>Timing complete kernel calls</span></a></li><li><a href="chapter-07.html"><span class="chapter-label">Chapter 7 · Part 1</span><span>RMSNorm and residual gradient paths</span></a></li><li><a href="chapter-07-part-2.html"><span class="chapter-label">Chapter 7 · Part 2</span><span>Checking normalization and residual graphs</span></a></li><li><a href="chapter-08.html"><span class="chapter-label">Chapter 8 · Part 1</span><span>SwiGLU and the two-branch backward pass</span></a></li><li><a href="chapter-08-part-2.html"><span class="chapter-label">Chapter 8 · Part 2</span><span>Checking feed-forward branches and saved state</span></a></li><li><a href="chapter-09.html"><span class="chapter-label">Chapter 9 · Part 1</span><span>Rotary positions as explicit coordinate transformations</span></a></li><li><a href="chapter-09-part-2.html"><span class="chapter-label">Chapter 9 · Part 2</span><span>Checking coordinate conventions and absolute positions</span></a></li><li><a href="chapter-10.html"><span class="chapter-label">Chapter 10 · Part 1</span><span>Causal grouped-query attention, forward</span></a></li><li><a href="chapter-10-part-2.html"><span class="chapter-label">Chapter 10 · Part 2</span><span>Checking causal attention and shared heads</span></a></li><li><a href="chapter-11.html"><span class="chapter-label">Chapter 11 · Part 1</span><span>Attention backward and shared-head accumulation</span></a></li><li><a href="chapter-11-part-2.html"><span class="chapter-label">Chapter 11 · Part 2</span><span>Checking attention gradients and accumulation</span></a></li><li><a href="chapter-12.html"><span class="chapter-label">Chapter 12 · Part 1</span><span>Assemble and differentiate the complete decoder</span></a></li><li><a href="chapter-12-part-2.html"><span class="chapter-label">Chapter 12 · Part 2</span><span>Training tape and reverse scheduling</span></a></li><li><a href="chapter-12-part-3.html"><span class="chapter-label">Chapter 12 · Part 3</span><span>Checking the assembled model</span></a></li><li><a href="chapter-13.html"><span class="chapter-label">Chapter 13 · Part 1</span><span>Byte text, shifted targets, and bounded data preparation</span></a></li><li><a href="chapter-13-part-2.html"><span class="chapter-label">Chapter 13 · Part 2</span><span>Bounded preparation and end-to-end checks</span></a></li><li><a href="chapter-14.html"><span class="chapter-label">Chapter 14 · Part 1</span><span>AdamW, accumulation, and gradient clipping</span></a></li><li><a href="chapter-14-part-2.html"><span class="chapter-label">Chapter 14 · Part 2</span><span>Checking optimizer state and equivalent batches</span></a></li><li><a href="chapter-15.html"><span class="chapter-label">Chapter 15 · Part 1</span><span>Train, evaluate, checkpoint, and resume</span></a></li><li><a href="chapter-15-part-2.html"><span class="chapter-label">Chapter 15 · Part 2</span><span>Versioned checkpoints and coherent restoration</span></a></li><li><a href="chapter-15-part-3.html"><span class="chapter-label">Chapter 15 · Part 3</span><span>Running the training application</span></a></li><li><a href="chapter-15-part-4.html"><span class="chapter-label">Chapter 15 · Part 4</span><span>Checking continuation and failure recovery</span></a></li><li><a href="chapter-16.html"><span class="chapter-label">Chapter 16 · Part 1</span><span>Inference workspaces and token sampling</span></a></li><li><a href="chapter-16-part-2.html"><span class="chapter-label">Chapter 16 · Part 2</span><span>Weight-only loading and categorical selection</span></a></li><li><a href="chapter-16-part-3.html"><span class="chapter-label">Chapter 16 · Part 3</span><span>Full-prefix generation and executable checks</span></a></li><li><a href="chapter-17.html"><span class="chapter-label">Chapter 17 · Part 1</span><span>Prefill and incremental key/value caching</span></a></li><li><a href="chapter-17-part-2.html"><span class="chapter-label">Chapter 17 · Part 2</span><span>Computing and committing a cached step</span></a></li><li><a href="chapter-17-part-3.html"><span class="chapter-label">Chapter 17 · Part 3</span><span>Checking cache equivalence and failure recovery</span></a></li><li><a href="chapter-18.html"><span class="chapter-label">Chapter 18 · Part 1</span><span>Online normalization and tiled attention forward</span></a></li><li><a href="chapter-18-part-2.html"><span class="chapter-label">Chapter 18 · Part 2</span><span>Integrating bounded attention into inference</span></a></li><li><a href="chapter-18-part-3.html"><span class="chapter-label">Chapter 18 · Part 3</span><span>Checking tiled outputs, storage, and generation</span></a></li><li><a href="chapter-19.html"><span class="chapter-label">Chapter 19 · Part 1</span><span>Recomputed tiled backward without a quadratic tape</span></a></li><li><a href="chapter-19-part-2.html"><span class="chapter-label">Chapter 19 · Part 2</span><span>A linear training tape and paired dispatch</span></a></li><li><a href="chapter-19-part-3.html"><span class="chapter-label">Chapter 19 · Part 3</span><span>Training policy and versioned continuation</span></a></li><li><a href="chapter-19-part-4.html"><span class="chapter-label">Chapter 19 · Part 4</span><span>Checking tiled core and sublayer gradients</span></a></li><li><a href="chapter-19-part-5.html"><span class="chapter-label">Chapter 19 · Part 5</span><span>Whole-model, training, and memory checks</span></a></li><li><a href="chapter-20.html"><span class="chapter-label">Chapter 20 · Part 1</span><span>Import and validate pretrained weights</span></a></li><li><a href="chapter-20-part-2.html"><span class="chapter-label">Chapter 20 · Part 2</span><span>Bounded C loading and imported position limits</span></a></li><li><a href="chapter-20-part-3.html"><span class="chapter-label">Chapter 20 · Part 3</span><span>Executable import fixtures and the C inspection path</span></a></li><li><a href="chapter-20-part-4.html"><span class="chapter-label">Chapter 20 · Part 4</span><span>Cross-language validation and separate memory measurements</span></a></li><li><a href="chapter-21.html"><span class="chapter-label">Chapter 21 · Part 1</span><span>Tokenizer boundaries and pretrained reference agreement</span></a></li><li><a href="chapter-21-part-2.html"><span class="chapter-label">Chapter 21 · Part 2</span><span>Observing C execution and selecting vocabulary IDs</span></a></li><li><a href="chapter-21-part-3.html"><span class="chapter-label">Chapter 21 · Part 3</span><span>Independent eager equations and numerical disagreement</span></a></li><li><a href="chapter-21-part-4.html"><span class="chapter-label">Chapter 21 · Part 4</span><span>Executable checks and the real-asset workflow</span></a></li><li><a href="chapter-22.html"><span class="chapter-label">Chapter 22 · Part 1</span><span>End-to-end demonstration and measured tradeoffs</span></a></li><li><a href="chapter-22-part-2.html"><span class="chapter-label">Chapter 22 · Part 2</span><span>Measure forward/backward pairs and test the harness</span></a></li><li><a href="chapter-22-part-3.html"><span class="chapter-label">Chapter 22 · Part 3</span><span>A repeatable training, restart, and generation run</span></a></li><li><a href="chapter-22-part-4.html"><span class="chapter-label">Chapter 22 · Part 4</span><span>Interpret the measurements and complete the demonstration</span></a></li></ol></nav>
+<p class="sidebar-note">A C decoder laboratory: explicit tensor layouts, manual gradients, small-model training, cached inference, and exact tiled attention.</p></aside>
+<main id="main-content" tabindex="-1">
+<div class="breadcrumb"><a href="index.html">Modern Language Models in C</a><span aria-hidden="true">/</span><span>Chapter 1</span></div>
+<div class="page-actions"><a href="https://github.com/25d-228/gpt-c/issues/2">Read on GitHub</a><a href="source/chapter-01.md">Markdown</a></div>
+<details class="mobile-toc"><summary>In this chapter</summary><ul><li class="toc-h2"><a href="#establish-the-native-build-environment">Establish the native build environment</a></li><li class="toc-h2"><a href="#start-with-a-result-that-can-be-calculated-by-hand">Start with a result that can be calculated by hand</a></li><li class="toc-h2"><a href="#declare-the-memory-contract-before-writing-the-loop">Declare the memory contract before writing the loop</a></li><li class="toc-h2"><a href="#define-the-reduction-in-one-source-module">Define the reduction in one source module</a></li><li class="toc-h2"><a href="#give-the-kernel-a-complete-caller-and-executable-checks">Give the kernel a complete caller and executable checks</a></li><li class="toc-h2"><a href="#follow-the-source-through-compilation-and-linking">Follow the source through compilation and linking</a></li><li class="toc-h2"><a href="#make-builds-repeatable-without-mixing-configurations">Make builds repeatable without mixing configurations</a></li><li class="toc-h2"><a href="#stop-at-a-particular-accumulation-in-lldb">Stop at a particular accumulation in LLDB</a></li><li class="toc-h2"><a href="#separate-a-compiler-warning-from-a-linker-failure">Separate a compiler warning from a linker failure</a></li><li class="toc-h2"><a href="#let-a-sanitizer-catch-a-caller-that-lies-about-length">Let a sanitizer catch a caller that lies about length</a></li><li class="toc-h2"><a href="#make-one-small-change-then-predict-the-effect">Make one small change, then predict the effect</a></li><li class="toc-h2"><a href="#diagnose-the-smallest-failing-boundary">Diagnose the smallest failing boundary</a></li><li class="toc-h2"><a href="#the-code-state-carried-into-chapter-2">The code state carried into Chapter 2</a></li><li class="toc-h2"><a href="#technical-references">Technical references</a></li></ul></details>
+<p id="math-status" hidden>Some mathematics could not be rendered. The original notation remains visible.</p>
+<article><h1 id="chapter-1-native-c-builds-and-a-debuggable-numerical-program">Chapter 1 — Native C builds and a debuggable numerical program</h1>
+<p>A numerical kernel is a function that performs a small piece of arithmetic on memory supplied by its caller. Before building a decoder, we need to know what the compiler can check about that function, what its caller must guarantee, and how to inspect an incorrect result. A three-element dot product is enough to make those boundaries visible.</p>
+<p>By the end of this chapter, one header and two C source files form a complete executable. It has separate debug, sanitizer, and optimized builds. You can stop inside its accumulation loop, explain every memory read, and distinguish a bad declaration, a missing implementation, and an invalid runtime access. No tensor library, Python interpreter, model weights, or later course files are needed.</p>
+<blockquote>
+<p><strong>Learning objectives</strong>
+Build and link separate C translation units; describe a borrowed pointer-and-length interface; trace a reduction over contiguous arrays; inspect its state in LLDB; and diagnose an isolated out-of-bounds read without putting undefined behavior in the normal tests.</p>
+</blockquote>
+<p><strong>Starting point:</strong> basic C expressions, loops, and functions, with no existing application code. <strong>Implementation estimate: 1.75 hours</strong>—0.50 for setup and builds, 0.75 for the program, and 0.50 for debugger work and checks. Reading is separate. Record your actual hands-on time rather than stretching a finished exercise to match the estimate.</p>
+<h2 id="establish-the-native-build-environment">Establish the native build environment</h2>
+<p>In Terminal, inspect the tools already available:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — observation only</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>sw_vers
+uname<span class="w"> </span>-m
+xcode-select<span class="w"> </span>--print-path
+xcrun<span class="w"> </span>--find<span class="w"> </span>clang
+xcrun<span class="w"> </span>clang<span class="w"> </span>--version
+xcrun<span class="w"> </span>lldb<span class="w"> </span>--version
+make<span class="w"> </span>--version
+</code></pre></figure>
+<p>For native work on the M4, <code>uname -m</code> should report <code>arm64</code>. We will also inspect the executable, because the shell's architecture and a compiler's selected target are different observations. Do not copy a particular macOS version from an example into your setup requirements.</p>
+<p><code>xcrun</code> locates a tool in the selected Apple developer environment. A working Command Line Tools installation is sufficient for this example; the full Xcode application is not required. When the tools are missing, Apple's installer can be requested with:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — only when Command Line Tools are missing</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>xcode-select<span class="w"> </span>--install
+</code></pre></figure>
+<p>After installation, repeat the observation commands. An invalid active developer directory is a tool-selection problem, not a reason to delete unrelated installations. Apple's <a href="https://developer.apple.com/documentation/xcode/installing-the-command-line-tools/">command-line tools installation page</a> and <a href="https://developer.apple.com/library/archive/technotes/tn2339/_index.html">TN2339 sections on installation and tool selection</a> describe these mechanisms. The latter is an archived reference: its example operating-system versions are not requirements for this course.</p>
+<p>We use <strong>C17 mode</strong>, a working C standard library, debug information, and address/undefined-behavior sanitizer support. The small builds below exercise those features. There is no exact compiler-version gate. A compatible alternative compiler is acceptable; the Makefile provides an explicit override.</p>
+<p>Create the example directory inside your learner workspace, not inside the book's generated website:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — from the learner workspace root</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>mkdir<span class="w"> </span>-p<span class="w"> </span>examples/01-build
+<span class="nb">cd</span><span class="w"> </span>examples/01-build
+</code></pre></figure>
+<p>All subsequent shell commands in this chapter run from <code>examples/01-build/</code> unless stated otherwise. Write these four persistent files:</p>
+<figure class="code-block"><figcaption><span class="code-title">Output</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>examples/01-build/
+    dot.h
+    dot.c
+    main.c
+    Makefile
+</code></pre></figure>
+<p>The chapter contains their complete contents. Companion source files—<a href="https://25d-228.github.io/gpt-c/media/chapter-01/reference/dot.h">dot.h</a>, <a href="https://25d-228.github.io/gpt-c/media/chapter-01/reference/dot.c">dot.c</a>, <a href="https://25d-228.github.io/gpt-c/media/chapter-01/reference/main.c">main.c</a>, and <a href="https://25d-228.github.io/gpt-c/media/chapter-01/reference/Makefile">Makefile</a>—contain the same program. Write your working copy in the example directory above. The later <code>build/</code> directory contains disposable outputs and the two temporary fault exercises. Do not store your own persistent source there.</p>
+<h2 id="start-with-a-result-that-can-be-calculated-by-hand">Start with a result that can be calculated by hand</h2>
+<p>Let <span class="math-input" data-display="false">a</span> and <span class="math-input" data-display="false">b</span> each have <span class="math-input" data-display="false">n</span> coordinates. Their dot product is the scalar</p>
+<div class="math-input" data-display="true">s = \sum_{i=0}^{n-1} a_i b_i.</div>
+<p>Here <span class="math-input" data-display="false">n</span> is the number of elements, <span class="math-input" data-display="false">i</span> is a zero-based coordinate, <span class="math-input" data-display="false">a_i</span> and <span class="math-input" data-display="false">b_i</span> are the values at that coordinate, and <span class="math-input" data-display="false">s</span> is one number rather than another vector. The summation sign means “multiply corresponding coordinates and add the products.” This is a <strong>reduction</strong>: several input values become one accumulated result.</p>
+<p>For <span class="math-input" data-display="false">a=[1,2,3]</span> and <span class="math-input" data-display="false">b=[4,5,6]</span>,</p>
+<div class="math-input" data-display="true">s = 1\cdot4 + 2\cdot5 + 3\cdot6 = 4+10+18 = 32.</div>
+<p>The input shapes are <code>[3]</code> and <code>[3]</code>; the output is a scalar. In C, each input is a contiguous array of <code>float</code>. Element <code>i</code> is <code>i * sizeof(float)</code> bytes after the first element, but C's subscript operator performs the scaling for us. On the target, a <code>float</code> occupies four bytes; the program prints <code>sizeof(float)</code> rather than baking that number into address arithmetic.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right">Coordinate <code>i</code></th>
+<th style="text-align:right">Offset within each input on the target</th>
+<th style="text-align:right"><code>a[i]</code></th>
+<th style="text-align:right"><code>b[i]</code></th>
+<th style="text-align:right">Product</th>
+<th style="text-align:right">Running sum after addition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">0</td>
+<td style="text-align:right">0 bytes</td>
+<td style="text-align:right">1</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">4</td>
+</tr>
+<tr>
+<td style="text-align:right">1</td>
+<td style="text-align:right">4 bytes</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">5</td>
+<td style="text-align:right">10</td>
+<td style="text-align:right">14</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td style="text-align:right">8 bytes</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">6</td>
+<td style="text-align:right">18</td>
+<td style="text-align:right">32</td>
+</tr>
+</tbody>
+</table>
+<p>At <code>i == 3</code>, the loop must stop. An array of three elements has indices <code>0</code>, <code>1</code>, and <code>2</code>; its length is not a valid index. The two arrays are independently contiguous. There is no guarantee that one immediately follows the other in memory.</p>
+<p>Later, a matrix product will compute many such reductions, with different starting addresses and strides. For now, there is no hidden matrix machinery: the multiply and add happen in our loop.</p>
+<h2 id="declare-the-memory-contract-before-writing-the-loop">Declare the memory contract before writing the loop</h2>
+<p>A function declaration states types that other source files can use. It does not supply a function body. Create the complete header:</p>
+<figure class="code-block"><figcaption><span class="code-title">examples/01-build/dot.h</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="cp">#ifndef DL_EXAMPLE_DOT_H</span>
+<span class="cp">#define DL_EXAMPLE_DOT_H</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stddef.h&gt;</span>
+
+<span class="cm">/*</span>
+<span class="cm"> * Read n initialized floats from each input and return their dot product.</span>
+<span class="cm"> * For n &gt; 0, a and b must each address at least n live float elements.</span>
+<span class="cm"> * For n == 0, either pointer may be NULL; no input is accessed.</span>
+<span class="cm"> * Inputs may overlap. This function writes neither input, retains no pointer,</span>
+<span class="cm"> * and performs no allocation. Invalid extents are a caller error, not a status.</span>
+<span class="cm"> */</span>
+<span class="kt">float</span><span class="w"> </span><span class="nf">dot_f32</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+
+<span class="cp">#endif</span>
+</code></pre></figure>
+<p>The first two lines and the final <code>#endif</code> form an <strong>include guard</strong>. On the first inclusion within a translation unit, the preprocessor defines <code>DL_EXAMPLE_DOT_H</code> and keeps the declarations. On another inclusion, the name is already defined, so the guarded contents are skipped. This is a source-processing mechanism, not a runtime branch.</p>
+<p><code>&lt;stddef.h&gt;</code> declares <code>size_t</code>, the unsigned integer type used for object sizes and the result of <code>sizeof</code>. Using the same type for <code>n</code> and the loop index avoids a signed/unsigned comparison. It does <strong>not</strong> make a length trustworthy or make arbitrary multiplication overflow-safe. Checked size calculations enter in Chapter 2.</p>
+<p>Read <code>const float *a</code> as “<code>a</code> is a pointer through which the function reads floats but does not modify them.” The <code>*</code> is part of the pointer declaration. In an expression, <code>*a</code> would instead dereference the pointer and designate its first element. <code>const</code> here qualifies the pointed-to floats; it does not make the local pointer variable itself unchangeable. A pointer with this type may also refer to otherwise mutable storage. See the GNU C manual's <a href="https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Pointer-Declarations.html">pointer declarations</a> and <a href="https://www.gnu.org/software/c-intro-and-ref/manual/html_node/const.html"><code>const</code> discussion</a>.</p>
+<p>An input pointer is <strong>borrowed</strong>: the caller provides storage that stays alive during the call. The function neither owns nor frees that storage, and it keeps no pointer after returning. Since it only reads, <code>a</code> and <code>b</code> may refer to the same array. There is no <code>restrict</code> promise here; that keyword will be introduced before an optimization needs it.</p>
+<p>Most importantly, an ordinary C pointer carries <strong>no element count</strong>. The callee receives an address and a separate <code>n</code>, not a checked slice. Writing a parameter as <code>const float a[3]</code> would not automatically enforce three accessible elements; ordinary array parameter declarations are adjusted to pointer types. The GNU C manual explains this adjustment under <a href="https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Function-Parameter-Variables.html">function parameters</a>. We use the pointer form to keep the limitation visible.</p>
+<p>The comment adds requirements that the type system does not establish. With positive <code>n</code>, both pointers must address enough initialized, live elements, and those elements must not be changed during this call. A non-null check alone would not prove any of that. This teaching kernel has no error-status result: a legitimate dot product can be zero, so zero must not double as “bad pointer.” Its valid calls are defined by the contract above.</p>
+<p>The empty case is deliberate. <code>dot_f32(NULL, NULL, 0)</code> will return zero without accessing an input. <code>NULL</code> represents a null pointer when used as a pointer argument; it does not allocate an empty array. We cannot dereference it. We can nevertheless pass it to a function whose zero-length path performs no dereference or pointer arithmetic.</p>
+<h2 id="define-the-reduction-in-one-source-module">Define the reduction in one source module</h2>
+<p>Create the complete implementation:</p>
+<figure class="code-block"><figcaption><span class="code-title">examples/01-build/dot.c</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">"dot.h"</span>
+
+<span class="kt">float</span><span class="w"> </span><span class="nf">dot_f32</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="w">        </span><span class="n">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sum</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">product</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">sum</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></figure>
+<p>Including its own header lets the compiler compare this definition with the interface seen by callers. Quotes in <code>#include &quot;dot.h&quot;</code> select a project header; angle brackets in <code>#include &lt;stddef.h&gt;</code> select a standard header through the toolchain's header search. Do not include <code>dot.c</code> from another <code>.c</code> file. We will compile it separately and link its object file.</p>
+<p><code>0.0f</code> is a <code>float</code> literal; without the <code>f</code>, <code>0.0</code> has type <code>double</code>. Our accumulator and product are floats, matching the <code>f32</code> naming on the target. This is not a claim that standard C requires every implementation's <code>float</code> to use the same representation. Chapter 3 will examine representation and rounding explicitly.</p>
+<p>The loop initializes <code>i</code> to zero, checks <code>i &lt; n</code> before each body execution, then increments <code>i</code>. <code>a[i]</code> designates the element reached by advancing <code>i</code> float elements from <code>a</code>, not <code>i</code> bytes. <code>product</code> is a new local value for the iteration. The assignment to <code>sum</code> incorporates it into the running total.</p>
+<p>We can describe the loop's state without guessing from the final printout. After <span class="math-input" data-display="false">k</span> iterations, where <span class="math-input" data-display="false">0\leq k\leq n</span>, the accumulator represents the prefix reduction</p>
+<div class="math-input" data-display="true">s_k = \sum_{j=0}^{k-1} a_j b_j,
+\qquad s_0=0.</div>
+<p>The new symbol <span class="math-input" data-display="false">j</span> indexes terms already processed; <span class="math-input" data-display="false">k</span> counts completed iterations. The loop body adds the next product, taking <span class="math-input" data-display="false">s_k</span> to <span class="math-input" data-display="false">s_{k+1}</span>. At termination, <span class="math-input" data-display="false">k=n</span>. For these small integer-valued inputs the results are exactly representable, so the earlier table describes the actual values. With arbitrary floating-point data, each arithmetic step can round; this formula expresses the intended reduction, not a promise of exact real arithmetic.</p>
+<p>For <code>n == 0</code>, the first condition <code>0 &lt; 0</code> is false. Neither <code>a[i]</code> nor <code>b[i]</code> is evaluated, and <code>sum</code> remains zero. This is why the implementation meets the empty-case contract without special pointer handling. It also avoids computing <code>n - 1</code>: subtracting one from an unsigned zero would produce a large unsigned value, not a useful “last index.”</p>
+<p>There is no allocation and no cleanup path in this function. The returned scalar is a value, not a pointer to the local <code>sum</code>. The caller's arrays remain the caller's responsibility.</p>
+<h2 id="give-the-kernel-a-complete-caller-and-executable-checks">Give the kernel a complete caller and executable checks</h2>
+<p>The following two blocks, in order, form <strong>one complete <code>main.c</code></strong>. There is no omitted helper. Begin with includes and the normal/empty evaluations:</p>
+<figure class="code-block"><figcaption><span class="code-title">examples/01-build/main.c — first part</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">"dot.h"</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mf">1.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">3.0f</span><span class="p">};</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mf">4.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">6.0f</span><span class="p">};</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">sizeof</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">sizeof</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot_f32</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">empty</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot_f32</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"dot = %.0f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">result</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"empty dot = %.0f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">empty</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"elements = %zu, bytes per element = %zu</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+</code></pre></figure>
+<p><code>int main(void)</code> declares a function with no parameters and an integer exit status. The <code>(void)</code> matters: in C17, an empty parameter list in an ordinary declaration does not express the same prototype. <code>&lt;stdio.h&gt;</code> supplies declarations for output functions and the standard error stream. <code>&lt;stdlib.h&gt;</code> supplies <code>EXIT_SUCCESS</code> and <code>EXIT_FAILURE</code>, which we use below.</p>
+<p><code>a</code> and <code>b</code> are actual array objects here. Their storage has automatic duration: it remains alive while this invocation of <code>main</code> is executing. Each array occupies space for three elements, and the initializer supplies all three values. In a call such as <code>dot_f32(a, b, n)</code>, each array expression is converted to a pointer to its first element. The arrays are not copied into the callee.</p>
+<p><code>sizeof a</code> is the size of the entire array, while <code>sizeof a[0]</code> is the size of one element. Their ratio is therefore three. This works <strong>where <code>a</code> is an array</strong>. Inside <code>dot_f32</code>, <code>sizeof a</code> would give the size of its pointer parameter, not the caller's array. The <a href="https://www.gnu.org/software/c-intro-and-ref/manual/c-intro-and-ref.html#Type-Size">GNU C manual's type-size discussion</a> describes this distinction. A pointer to a large tensor and a pointer to one float need not differ in size; the pointed-to extent is separate information.</p>
+<p>The <code>%zu</code> conversion prints a <code>size_t</code> value without assuming that it is an <code>int</code> or a particular unsigned integer type. <code>%.0f</code> prints a floating value with zero digits after the decimal point. <code>printf</code> takes a variable number of arguments; a float supplied in that variable argument list is promoted to <code>double</code>. The casts above make the expected argument type explicit; they do not change the kernel's accumulation precision. Standard floating and integer output conversions are described in the <a href="https://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_chapter/libc_12.html">GNU C library reference</a>.</p>
+<p>The display format is <strong>not</strong> a correctness test: a nearby wrong result could still print <code>32</code>. Append these checks and the end of <code>main</code> immediately after the first block:</p>
+<figure class="code-block"><figcaption><span class="code-title">examples/01-build/main.c — second part</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mf">32.0f</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">empty</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"FAIL: normal or empty dot product</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">EXIT_FAILURE</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dot_f32</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mf">4.0f</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"FAIL: one-element prefix</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">EXIT_FAILURE</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dot_f32</span><span class="p">(</span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mf">28.0f</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"FAIL: two-element suffix</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">EXIT_FAILURE</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dot_f32</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mf">14.0f</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"FAIL: overlapping read-only inputs</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">EXIT_FAILURE</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">puts</span><span class="p">(</span><span class="s">"all checks passed"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">EXIT_SUCCESS</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></figure>
+<p><code>||</code> means logical “or”; the first failure branch is taken when either the normal result or the empty result is wrong. <code>fprintf(stderr, ...)</code> sends a diagnostic to standard error. Returning <code>EXIT_FAILURE</code> makes a failed check visible to the shell and to <code>make</code>, not just to a person reading text. <code>puts</code> writes the success message with a newline.</p>
+<p>The other calls probe the interface. A one-element prefix returns <span class="math-input" data-display="false">1\cdot4=4</span>. Advancing both pointers by one skips the first pair, so the two-element suffix returns <span class="math-input" data-display="false">2\cdot5+3\cdot6=28</span>. Here <code>n</code> is known to be three, making <code>n - 1</code> safe. In general, adjust the available length whenever you advance a pointer. Reusing length three after <code>a + 1</code> would overread the original three-element array.</p>
+<p>Passing <code>a</code> twice computes <span class="math-input" data-display="false">1^2+2^2+3^2=14</span>. It is valid because both inputs are read-only. No temporary copy or disjointness assumption is needed. These five calls test normal, empty, single-element, offset, and overlapping-input cases.</p>
+<p>Exact equality is appropriate <strong>for these fixtures</strong>: the inputs, products, and sums are small integers exactly representable in the target's floating-point format. It is not our general tensor-testing policy. Chapter 3 introduces tolerances and non-finite checks for less accommodating calculations.</p>
+<p>We use explicit branches instead of making test execution depend on <code>assert</code>, which can be disabled by defining <code>NDEBUG</code>. The numerical checks therefore remain active in the optimized executable too. The output calls are human-readable diagnostics; the process exit status is the test result, not a durable output-file protocol.</p>
+<h2 id="follow-the-source-through-compilation-and-linking">Follow the source through compilation and linking</h2>
+<p>A <strong>translation unit</strong> is one C source file after preprocessing its includes and directives. Our program has two: one from <code>main.c</code>, another from <code>dot.c</code>. Both see a declaration of <code>dot_f32</code> from the header; only the second contains its definition.</p>
+<p>Conceptually, the toolchain proceeds through preprocessing, type/syntax checking and code generation, assembly into object files, then linking those objects into an executable. An object file contains compiled code and symbols, but is not yet this complete program. The compiler driver coordinates these stages; we do not invoke the linker directly. These stages and their selection flags are documented in the <a href="https://clang.llvm.org/docs/CommandGuide/clang.html">Clang command guide</a>.</p>
+<p>Before using the commands, read their options:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Role in this example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-std=c17</code></td>
+<td>Select C17 source-language rules.</td>
+</tr>
+<tr>
+<td><code>-Wall -Wextra -Wpedantic</code></td>
+<td>Enable useful warning groups and language-extension diagnostics; this is not a proof of correctness.</td>
+</tr>
+<tr>
+<td><code>-O0</code></td>
+<td>Disable most optimization for straightforward source-level stepping.</td>
+</tr>
+<tr>
+<td><code>-g</code></td>
+<td>Emit debugging information used to associate instructions with source and variables.</td>
+</tr>
+<tr>
+<td><code>-c</code></td>
+<td>Produce an object file without linking an executable.</td>
+</tr>
+<tr>
+<td><code>-o path</code></td>
+<td>Name the output.</td>
+</tr>
+<tr>
+<td><code>-E</code></td>
+<td>Stop after preprocessing.</td>
+</tr>
+<tr>
+<td><code>-S</code></td>
+<td>Produce assembly text rather than an object or linked executable.</td>
+</tr>
+</tbody>
+</table>
+<p>Compile and link explicitly once, so the later Makefile is not mysterious:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — separate compilation, then linking</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>mkdir<span class="w"> </span>-p<span class="w"> </span>build/manual
+xcrun<span class="w"> </span>clang<span class="w"> </span>-std<span class="o">=</span>c17<span class="w"> </span>-Wall<span class="w"> </span>-Wextra<span class="w"> </span>-Wpedantic<span class="w"> </span>-O0<span class="w"> </span>-g<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-c<span class="w"> </span>main.c<span class="w"> </span>-o<span class="w"> </span>build/manual/main.o
+xcrun<span class="w"> </span>clang<span class="w"> </span>-std<span class="o">=</span>c17<span class="w"> </span>-Wall<span class="w"> </span>-Wextra<span class="w"> </span>-Wpedantic<span class="w"> </span>-O0<span class="w"> </span>-g<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-c<span class="w"> </span>dot.c<span class="w"> </span>-o<span class="w"> </span>build/manual/dot.o
+xcrun<span class="w"> </span>clang<span class="w"> </span>-g<span class="w"> </span>build/manual/main.o<span class="w"> </span>build/manual/dot.o<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-o<span class="w"> </span>build/manual/dot-demo
+./build/manual/dot-demo
+</code></pre></figure>
+<p>The trailing backslash on a shell line continues that command onto the next line. Keep it as the last character, without spaces after it. <code>mkdir -p</code> creates the output directory when necessary. The <code>./</code> execution prefix selects the program at that relative path rather than searching the shell's command path.</p>
+<p>Expected program output on the target:</p>
+<figure class="code-block"><figcaption><span class="code-title">Output</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>dot = 32
+empty dot = 0
+elements = 3, bytes per element = 4
+all checks passed
+</code></pre></figure>
+<p>The compiler may emit its own diagnostics before the run. There should be none for these valid listings with the shown options. A nonzero program exit is a failed check even when some earlier lines look right.</p>
+<p>You can also inspect two intermediate forms:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — inspect the build stages</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>xcrun<span class="w"> </span>clang<span class="w"> </span>-std<span class="o">=</span>c17<span class="w"> </span>-E<span class="w"> </span>dot.c<span class="w"> </span>-o<span class="w"> </span>build/manual/dot.i
+xcrun<span class="w"> </span>clang<span class="w"> </span>-std<span class="o">=</span>c17<span class="w"> </span>-O0<span class="w"> </span>-S<span class="w"> </span>dot.c<span class="w"> </span>-o<span class="w"> </span>build/manual/dot.s
+</code></pre></figure>
+<p>Open <code>dot.i</code> in an editor and find the declaration and definition of <code>dot_f32</code>. Header contents and preprocessing markers appear around them. Open <code>dot.s</code> to see that a C function becomes target-specific instructions; you do not need to learn the assembly language here. Neither command creates a runnable program.</p>
+<p>The declaration is enough to compile a call. The definition must still be available at link time. The header itself is not an object file and should not be passed to the link command. Include guards prevent repeated header processing within a translation unit; they do not prevent duplicate function definitions across separate translation units.</p>
+<h2 id="make-builds-repeatable-without-mixing-configurations">Make builds repeatable without mixing configurations</h2>
+<p>A debugger build favors inspectable state. A sanitizer build adds runtime checks. An optimized build changes code generation and should not inherit sanitizer instrumentation accidentally. Put their object files and executables in separate directories.</p>
+<p>Our additional warning options are <code>-Wconversion</code>, for potentially value-changing implicit conversions; <code>-Wshadow</code>, for declarations that hide another name; and <code>-Wstrict-prototypes</code>, for function declarations that omit parameter types. The <a href="https://clang.llvm.org/docs/DiagnosticsReference.html">Clang diagnostics reference</a> documents their categories. Warnings are deliberately not all promoted to errors: compiler releases can add diagnostics. Investigate new warnings instead of suppressing them merely to copy a version's output.</p>
+<p>The sanitizer configuration uses <code>-fsanitize=address,undefined</code> during <strong>both compilation and linking</strong>. AddressSanitizer checks instrumented memory accesses. UndefinedBehaviorSanitizer checks selected operations such as signed integer overflow and null/misaligned accesses. <code>-fno-sanitize-recover=undefined</code> makes a detected undefined-behavior check terminate instead of reporting and continuing. <code>-fno-omit-frame-pointer</code> helps make call stacks usable. The <a href="https://clang.llvm.org/docs/AddressSanitizer.html#usage">AddressSanitizer usage guide</a> and <a href="https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#usage">UndefinedBehaviorSanitizer usage guide</a> explain these flags and their limits.</p>
+<p>We use <code>-O1</code> for the sanitizer build and <code>-O2</code> for the optimized build. None uses <code>-ffast-math</code>, whose assumptions can alter floating-point behavior and reasoning about non-finite values; see <a href="https://clang.llvm.org/docs/UsersManual.html#controlling-floating-point-behavior">Clang's floating-point guide</a>. A named <code>product</code> in source is useful for debugging, not a promise of a particular number of machine instructions or universal bitwise agreement.</p>
+<p>A Makefile rule has a <strong>target</strong>, its <strong>prerequisites</strong>, and indented shell commands called its <strong>recipe</strong>. A file target is rebuilt when missing or older than a prerequisite. The recipe lines below begin with a <strong>literal tab</strong>, not a run of spaces. The GNU make manual describes <a href="https://www.gnu.org/software/make/manual/html_node/Rule-Syntax.html">rule syntax</a> and <a href="https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html">automatic variables</a>.</p>
+<p>Create this complete Makefile:</p>
+<figure class="code-block"><figcaption><span class="code-title">examples/01-build/Makefile</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="nv">CC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>xcrun<span class="w"> </span>clang
+<span class="nv">WARNINGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-Wall<span class="w"> </span>-Wextra<span class="w"> </span>-Wpedantic<span class="w"> </span>-Wconversion<span class="w"> </span>-Wshadow<span class="w"> </span>-Wstrict-prototypes
+<span class="nv">BASE_FLAGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-std<span class="o">=</span>c17<span class="w"> </span><span class="k">$(</span>WARNINGS<span class="k">)</span>
+<span class="nv">DEBUG_FLAGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">$(</span>BASE_FLAGS<span class="k">)</span><span class="w"> </span>-O0<span class="w"> </span>-g
+<span class="nv">SAN_FLAGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">$(</span>BASE_FLAGS<span class="k">)</span><span class="w"> </span>-O1<span class="w"> </span>-g<span class="w"> </span>-fno-omit-frame-pointer<span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>-fsanitize<span class="o">=</span>address,undefined<span class="w"> </span>-fno-sanitize-recover<span class="o">=</span>undefined
+<span class="nv">RELEASE_FLAGS</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">$(</span>BASE_FLAGS<span class="k">)</span><span class="w"> </span>-O2
+
+<span class="nf">.PHONY</span><span class="o">:</span><span class="w"> </span><span class="n">all</span> <span class="n">debug</span> <span class="n">sanitize</span> <span class="n">release</span> <span class="n">test</span> <span class="n">clean</span>
+
+<span class="nf">all</span><span class="o">:</span><span class="w"> </span><span class="n">debug</span>
+
+<span class="nf">debug</span><span class="o">:</span><span class="w"> </span><span class="n">build</span>/<span class="n">debug</span>/<span class="n">dot</span>-<span class="n">demo</span>
+<span class="nf">sanitize</span><span class="o">:</span><span class="w"> </span><span class="n">build</span>/<span class="n">sanitize</span>/<span class="n">dot</span>-<span class="n">demo</span>
+<span class="nf">release</span><span class="o">:</span><span class="w"> </span><span class="n">build</span>/<span class="n">release</span>/<span class="n">dot</span>-<span class="n">demo</span>
+
+<span class="nf">build/debug/dot-demo</span><span class="o">:</span><span class="w"> </span><span class="n">build</span>/<span class="n">debug</span>/<span class="n">main</span>.<span class="n">o</span> <span class="n">build</span>/<span class="n">debug</span>/<span class="n">dot</span>.<span class="n">o</span>
+<span class="w">	</span><span class="k">$(</span>CC<span class="k">)</span><span class="w"> </span><span class="k">$(</span>DEBUG_FLAGS<span class="k">)</span><span class="w"> </span>$^<span class="w"> </span>-o<span class="w"> </span><span class="nv">$@</span>
+
+<span class="nf">build/sanitize/dot-demo</span><span class="o">:</span><span class="w"> </span><span class="n">build</span>/<span class="n">sanitize</span>/<span class="n">main</span>.<span class="n">o</span> <span class="n">build</span>/<span class="n">sanitize</span>/<span class="n">dot</span>.<span class="n">o</span>
+<span class="w">	</span><span class="k">$(</span>CC<span class="k">)</span><span class="w"> </span><span class="k">$(</span>SAN_FLAGS<span class="k">)</span><span class="w"> </span>$^<span class="w"> </span>-o<span class="w"> </span><span class="nv">$@</span>
+
+<span class="nf">build/release/dot-demo</span><span class="o">:</span><span class="w"> </span><span class="n">build</span>/<span class="n">release</span>/<span class="n">main</span>.<span class="n">o</span> <span class="n">build</span>/<span class="n">release</span>/<span class="n">dot</span>.<span class="n">o</span>
+<span class="w">	</span><span class="k">$(</span>CC<span class="k">)</span><span class="w"> </span><span class="k">$(</span>RELEASE_FLAGS<span class="k">)</span><span class="w"> </span>$^<span class="w"> </span>-o<span class="w"> </span><span class="nv">$@</span>
+
+<span class="nf">build/debug/%.o</span><span class="o">:</span><span class="w"> </span>%.<span class="n">c</span> <span class="n">dot</span>.<span class="n">h</span> <span class="n">Makefile</span>
+<span class="w">	</span>mkdir<span class="w"> </span>-p<span class="w"> </span>build/debug
+<span class="w">	</span><span class="k">$(</span>CC<span class="k">)</span><span class="w"> </span><span class="k">$(</span>DEBUG_FLAGS<span class="k">)</span><span class="w"> </span>-c<span class="w"> </span>$&lt;<span class="w"> </span>-o<span class="w"> </span><span class="nv">$@</span>
+
+<span class="nf">build/sanitize/%.o</span><span class="o">:</span><span class="w"> </span>%.<span class="n">c</span> <span class="n">dot</span>.<span class="n">h</span> <span class="n">Makefile</span>
+<span class="w">	</span>mkdir<span class="w"> </span>-p<span class="w"> </span>build/sanitize
+<span class="w">	</span><span class="k">$(</span>CC<span class="k">)</span><span class="w"> </span><span class="k">$(</span>SAN_FLAGS<span class="k">)</span><span class="w"> </span>-c<span class="w"> </span>$&lt;<span class="w"> </span>-o<span class="w"> </span><span class="nv">$@</span>
+
+<span class="nf">build/release/%.o</span><span class="o">:</span><span class="w"> </span>%.<span class="n">c</span> <span class="n">dot</span>.<span class="n">h</span> <span class="n">Makefile</span>
+<span class="w">	</span>mkdir<span class="w"> </span>-p<span class="w"> </span>build/release
+<span class="w">	</span><span class="k">$(</span>CC<span class="k">)</span><span class="w"> </span><span class="k">$(</span>RELEASE_FLAGS<span class="k">)</span><span class="w"> </span>-c<span class="w"> </span>$&lt;<span class="w"> </span>-o<span class="w"> </span><span class="nv">$@</span>
+
+<span class="nf">test</span><span class="o">:</span><span class="w"> </span><span class="n">debug</span> <span class="n">sanitize</span> <span class="n">release</span>
+<span class="w">	</span>./build/debug/dot-demo
+<span class="w">	</span>./build/sanitize/dot-demo
+<span class="w">	</span>./build/release/dot-demo
+
+<span class="nf">clean</span><span class="o">:</span>
+<span class="w">	</span>rm<span class="w"> </span>-rf<span class="w"> </span>build
+</code></pre></figure>
+<p><code>$(NAME)</code> expands a Makefile variable. The <code>=</code> assignments above define text expanded when used. <code>CC</code> defaults to <code>xcrun clang</code> in this file; a command-line assignment such as <code>make CC=clang test</code> overrides it. That override is useful with a compatible non-Apple compiler, including a portable check on another operating system. It does not simulate an M4 run.</p>
+<p>In a recipe, <code>$@</code> is the target filename, <code>$&lt;</code> the first prerequisite, and <code>$^</code> the list of prerequisites without duplicates. For the debug link rule, <code>$^</code> is exactly the two object filenames. In the pattern rule, <code>%</code> matches the shared stem: <code>build/debug/main.o</code> uses <code>main.c</code>. Naming <code>dot.h</code> and <code>Makefile</code> as prerequisites ensures that editing the interface or the recorded flags rebuilds the affected objects. This small program needs no automatic dependency generator.</p>
+<p><code>all</code> is the first ordinary target and requests <code>debug</code> by default. <code>.PHONY</code> marks names such as <code>test</code> and <code>clean</code> as commands to perform rather than outputs to consider current merely because a same-named file exists. <code>clean</code> removes only the example's <code>build/</code> tree. Run it from this directory and never place irreplaceable work in that tree. Phony targets and command-line overrides are described in the <a href="https://www.gnu.org/software/make/manual/make.html">GNU make manual</a>.</p>
+<p>Now build and check all three configurations:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — normal builds and checks</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>make<span class="w"> </span><span class="nb">test</span>
+file<span class="w"> </span>build/debug/dot-demo
+</code></pre></figure>
+<p><code>make</code> echoes commands; each executable then prints the four output lines already shown. A failing check returns nonzero and stops the normal recipe. The <code>file</code> output for the native target should identify an <code>arm64</code> Mach-O executable. An <code>x86_64</code> result calls for checking the compiler target and how the terminal/toolchain was launched, rather than interpreting that run as native M4 behavior.</p>
+<p>A second <code>make test</code> normally skips compilation but runs the tests again. Changing <code>dot.c</code> rebuilds its object in each configuration, then relinks. Changing <code>dot.h</code> rebuilds both objects in each configuration. Changing the compiler through <code>CC=...</code> is <strong>not</strong> a file timestamp change; after switching compilers, use:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — rebuild after a toolchain change</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>make<span class="w"> </span>clean
+make<span class="w"> </span><span class="nv">CC</span><span class="o">=</span>clang<span class="w"> </span><span class="nb">test</span>
+</code></pre></figure>
+<p>On the standard Apple path, omit <code>CC=clang</code> to keep the selected <code>xcrun</code> compiler. <code>make -n test</code> prints the planned commands without executing them. Never time a sanitizer executable and describe the result as optimized-kernel performance; this chapter does not yet perform a useful benchmark.</p>
+<h2 id="stop-at-a-particular-accumulation-in-lldb">Stop at a particular accumulation in LLDB</h2>
+<p>Use the unoptimized debug executable, not the release executable:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — launch the debugger</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>make<span class="w"> </span>debug
+xcrun<span class="w"> </span>lldb<span class="w"> </span>./build/debug/dot-demo
+</code></pre></figure>
+<p>LLDB's prompt accepts debugger commands, not shell commands. A <strong>breakpoint</strong> pauses execution at a selected function or source location. A <strong>stack frame</strong> describes one active function call, including its arguments and local state. We will first stop at the function, then at its second accumulation. The <a href="https://lldb.llvm.org/use/tutorial.html">LLDB tutorial</a> documents breakpoints, execution control, and <code>frame variable</code>.</p>
+<p>Enter this first group at the LLDB prompt:</p>
+<figure class="code-block"><figcaption><span class="code-title">LLDB — enter the reduction</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>breakpoint set --name dot_f32
+run
+frame variable n
+frame variable 'a[0]' 'b[0]'
+thread backtrace
+</code></pre></figure>
+<p>On the first call, expect <code>n</code> to be three, <code>a[0]</code> to be one, and <code>b[0]</code> to be four. Type-name spelling, addresses, and frame numbers can differ by toolchain. The backtrace should include <code>dot_f32</code> called by <code>main</code>. At function entry, do not assume that every local has already been initialized; the source cursor indicates the next statement associated with the stop.</p>
+<p>In the exact <code>dot.c</code> listing above, line 8 is <code>sum = sum + product;</code>. Set a second breakpoint there, conditional on <code>i == 1</code>:</p>
+<figure class="code-block"><figcaption><span class="code-title">LLDB — stop before the second addition</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>breakpoint set --file dot.c --line 8 --condition 'i == 1'
+breakpoint disable 1
+continue
+frame variable i sum product
+next
+frame variable sum
+</code></pre></figure>
+<p>These breakpoint numbers assume a fresh session and the commands shown. Use the numbers LLDB reports when they differ. After editing the source, find the accumulation line with <code>source list --name dot_f32</code> and replace <code>8</code> with its current line number.</p>
+<p>The condition uses zero-based indexing: <code>i == 1</code> is the second element. Immediately <strong>before</strong> executing the addition, expect the state below. After <code>next</code> steps over that statement, <code>sum</code> should be 14.</p>
+<table>
+<thead>
+<tr>
+<th>Observation</th>
+<th>Expected state</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Before the selected addition</td>
+<td><code>i = 1</code>, <code>sum = 4</code>, <code>product = 10</code></td>
+</tr>
+<tr>
+<td>After <code>next</code></td>
+<td><code>sum = 14</code></td>
+</tr>
+</tbody>
+</table>
+<p>This directly tests the earlier prefix invariant. A final value of 32 alone would not reveal whether a wrong intermediate had later been compensated by another mistake.</p>
+<p>Disable the conditional breakpoint so it does not stop later test calls, then finish:</p>
+<figure class="code-block"><figcaption><span class="code-title">LLDB — finish the checks</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>breakpoint disable 2
+continue
+quit
+</code></pre></figure>
+<p>The executable should finish its normal checks and exit successfully. With an optimized binary, a local might be unavailable or source stepping might appear to jump; rebuild with the debug target rather than concluding that LLDB changed the mathematics. On macOS, if source line information is missing despite <code>-g</code>, keep the original <code>.o</code> files alongside the executable while debugging. <code>xcrun dsymutil build/debug/dot-demo</code> can collect their debug information into a <code>.dSYM</code> bundle; see the <a href="https://llvm.org/docs/CommandGuide/dsymutil.html">dsymutil command guide</a> and <a href="https://lldb.llvm.org/use/symbols.html">LLDB's symbols-on-macOS documentation</a>. Do not remove the objects before that collection.</p>
+<p>A debugger launch-permission failure is a debugger/environment problem, distinct from a failed numerical check. Do not disable system security broadly to make an example launch. The program remains testable directly while you inspect the local tool-selection or permission message.</p>
+<h2 id="separate-a-compiler-warning-from-a-linker-failure">Separate a compiler warning from a linker failure</h2>
+<p>The compiler can identify a mismatch that is visible in one translation unit. It cannot conjure an implementation absent from the link inputs. We will provoke each diagnostic in a disposable directory without altering the working kernel.</p>
+<p>First create the directory:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — isolated diagnostics</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>mkdir<span class="w"> </span>-p<span class="w"> </span>build/diagnostics
+</code></pre></figure>
+<p>Create this complete temporary source file. Its format is intentionally wrong; <strong>do not run it</strong>:</p>
+<figure class="code-block"><figcaption><span class="code-title">examples/01-build/build/diagnostics/format.c</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stddef.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"elements = %d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></figure>
+<p>Use <code>-fsyntax-only</code> to ask for preprocessing and language checks, without producing an executable:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — diagnose but do not execute the bad format</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>xcrun<span class="w"> </span>clang<span class="w"> </span>-std<span class="o">=</span>c17<span class="w"> </span>-Wall<span class="w"> </span>-Wextra<span class="w"> </span>-Wpedantic<span class="w"> </span>-fsyntax-only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>build/diagnostics/format.c
+</code></pre></figure>
+<p>Expect a diagnostic that <code>%d</code> expects an <code>int</code>, while the supplied value is a <code>size_t</code> (possibly displayed as its underlying unsigned type). A warning need not make the compiler return nonzero. The mismatch is not repaired by the fact that the value happens to be three; the format specifies how the variadic argument must be interpreted. Replace <code>%d</code> with <code>%zu</code> in this temporary file and repeat the check. It should now be quiet.</p>
+<p>Next omit the kernel's object from a link:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — intentionally incomplete link</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>xcrun<span class="w"> </span>clang<span class="w"> </span>-g<span class="w"> </span>build/debug/main.o<span class="w"> </span>-o<span class="w"> </span>build/diagnostics/missing-dot
+</code></pre></figure>
+<p>Expect a nonzero linker failure naming an unresolved <code>dot_f32</code> symbol, possibly with a platform prefix such as <code>_dot_f32</code>. <code>main.o</code> compiled successfully because its translation unit saw the declaration. The command did not provide the object defining that function. The repair is to link <code>build/debug/dot.o</code> as the Makefile already does—not to put the body in the header or suppress the linker error.</p>
+<p>A declaration and definition that disagree across files can also be dangerous: ordinary linking is not a general type checker for C interfaces. Including the same header in the implementation and all callers makes such disagreements visible to compilation. This is why <code>dot.c</code> includes <code>dot.h</code> even though its function definition appears self-contained.</p>
+<h2 id="let-a-sanitizer-catch-a-caller-that-lies-about-length">Let a sanitizer catch a caller that lies about length</h2>
+<p>A correct loop cannot infer that a caller supplied too large an <code>n</code>. We will keep <code>dot.c</code> unchanged and create a separate, deliberately invalid caller. This exercise uses AddressSanitizer alone so the intended report is clearly a memory-access report; the normal Makefile still checks with both sanitizers.</p>
+<p>Create its disposable directory:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — prepare the fault exercise</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>mkdir<span class="w"> </span>-p<span class="w"> </span>build/fault
+</code></pre></figure>
+<p>Then create this complete temporary file:</p>
+<figure class="code-block"><figcaption><span class="code-title">examples/01-build/build/fault/overread.c</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">"dot.h"</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mf">1.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">3.0f</span><span class="p">};</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mf">4.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0f</span><span class="p">,</span><span class="w"> </span><span class="mf">6.0f</span><span class="p">};</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dot_f32</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"invalid result = %.0f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="n">result</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></figure>
+<p>The only incorrect decision is the length four for arrays of length three. The fourth loop iteration tries to read element three. Forming a pointer just past an array can be valid; reading an element through that one-past pointer is not. This access has <strong>undefined behavior</strong>: the language makes no reliable promise of a crash, a particular value, or apparent success. An unsanitized run that prints something would not validate it.</p>
+<p><code>-I.</code> adds the current directory to the header-search path, letting a source in <code>build/fault/</code> include the project header. Compile and link with sanitizer flags at every stage:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — instrument the kernel and faulty caller</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>xcrun<span class="w"> </span>clang<span class="w"> </span>-std<span class="o">=</span>c17<span class="w"> </span>-Wall<span class="w"> </span>-Wextra<span class="w"> </span>-Wpedantic<span class="w"> </span>-O1<span class="w"> </span>-g<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-fsanitize<span class="o">=</span>address<span class="w"> </span>-fno-omit-frame-pointer<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-c<span class="w"> </span>dot.c<span class="w"> </span>-o<span class="w"> </span>build/fault/dot.o
+xcrun<span class="w"> </span>clang<span class="w"> </span>-std<span class="o">=</span>c17<span class="w"> </span>-Wall<span class="w"> </span>-Wextra<span class="w"> </span>-Wpedantic<span class="w"> </span>-O1<span class="w"> </span>-g<span class="w"> </span>-I.<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-fsanitize<span class="o">=</span>address<span class="w"> </span>-fno-omit-frame-pointer<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-c<span class="w"> </span>build/fault/overread.c<span class="w"> </span>-o<span class="w"> </span>build/fault/overread.o
+xcrun<span class="w"> </span>clang<span class="w"> </span>-g<span class="w"> </span>-fsanitize<span class="o">=</span>address<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>build/fault/overread.o<span class="w"> </span>build/fault/dot.o<span class="w"> </span>-o<span class="w"> </span>build/fault/overread
+
+<span class="k">if</span><span class="w"> </span>./build/fault/overread<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'%s\n'</span><span class="w"> </span><span class="s1">'Unexpected normal return; inspect the sanitizer build.'</span>
+<span class="k">else</span>
+<span class="w">    </span><span class="nb">printf</span><span class="w"> </span><span class="s1">'%s\n'</span><span class="w"> </span><span class="s1">'Inspect the report above; a nonzero exit alone is not proof.'</span>
+<span class="k">fi</span>
+</code></pre></figure>
+<p>The shell <code>if</code> selects its first branch only when the command exits successfully. The exercise is expected to take the second branch, with an AddressSanitizer report identifying a <strong>stack-buffer-overflow</strong> and a read. It is called a stack-buffer error because the caller's local arrays are stored in its stack frame in this build; no heap allocation was involved.</p>
+<p>Do not match the report against one address, process ID, or exact line-number transcript. Read the operation, its size, the first relevant source frame, and the named object whose extent was crossed. On this target the invalid element read is four bytes. The access is in <code>dot_f32</code>; the incorrect length originates in <code>main</code>. Fixing the fault therefore requires tracing the call, not merely blaming the line that performs the load.</p>
+<p>For this case, <code>a</code> has room for three four-byte elements: 12 bytes. After reading at offsets 0, 4, and 8, the next iteration requests a read starting at offset 12, outside the array. A report may name either input depending on code generation and access order. The important evidence is an instrumented read beyond one of those three-element arrays.</p>
+<p>AddressSanitizer instruments generated code and checks accesses against runtime memory metadata. It reports the first detected problem, rather than providing a usable numerical result from this invalid computation. If source names are absent, consult its <a href="https://clang.llvm.org/docs/AddressSanitizer.html#symbolizing-the-reports">symbolization instructions</a>; on macOS, generating a <code>.dSYM</code> with <code>dsymutil</code> can be necessary. Do not treat an unrelated loader or tool-launch failure as a successful sanitizer test.</p>
+<p>Sanitizers also cannot establish the <strong>logical</strong> extent of every numerical view. Suppose the arrays each really contain four initialized floats, but the algorithm is intended to use only their first three. Passing four would be memory-accessible yet mathematically wrong. A hand-calculated expected result or a shape contract must catch that. Likewise, passing the wrong valid row of a matrix can be completely invisible to memory diagnostics.</p>
+<p>Restore the ordinary working state after examining the fault:</p>
+<figure class="code-block"><figcaption><span class="code-title">Terminal — remove the temporary exercises and recheck</span><button type="button" class="copy-code" aria-label="Copy code">Copy</button></figcaption><pre><code>make<span class="w"> </span>clean
+make<span class="w"> </span><span class="nb">test</span>
+</code></pre></figure>
+<p><code>make clean</code> removes the fault sources and outputs because they were created under <code>build/</code>. The four persistent files never changed. The Makefile's <code>test</code> target never depends on an intentional fault and should again complete normally.</p>
+<h2 id="make-one-small-change-then-predict-the-effect">Make one small change, then predict the effect</h2>
+<p>Before running, predict how the loop and its caller should change in these two variations. They need no new infrastructure.</p>
+<p><strong>Change the supplied prefix length.</strong> In a temporary edit to the normal evaluation, use <code>dot_f32(a, b, n - 1)</code> instead of length <code>n</code>. The result becomes 14, not 32, because the last pair is no longer processed. The existing normal-result check should fail. The sanitizer should remain quiet: accessing a valid prefix is a numerical mismatch here, not a memory violation. Restore the original call afterward.</p>
+<p><strong>Negate one input coordinate.</strong> Change <code>b[1]</code> to <code>-5.0f</code>. The complete dot product becomes <span class="math-input" data-display="false">4-10+18=12</span>, the suffix becomes <span class="math-input" data-display="false">-10+18=8</span>, the one-element prefix stays 4, and the self-dot of <code>a</code> remains 14. Update just those two affected expectations, run all three builds, and confirm the new trace in the debugger. Then restore the original fixture and checks so the chapter leaves the named prerequisite state intact.</p>
+<p>These are short coding exercises, not new projects. Their purpose is to separate “the code accesses valid memory” from “the code computes the intended reduction,” and to make a prediction before the program tells you its answer.</p>
+<h2 id="diagnose-the-smallest-failing-boundary">Diagnose the smallest failing boundary</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>First useful interpretation and action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xcrun</code> cannot locate the tool</td>
+<td>Inspect the selected developer directory and installation; the C source has not yet been tested.</td>
+</tr>
+<tr>
+<td><code>dot.h</code> is not found</td>
+<td>Check the working directory, filename case, and <code>-I.</code> for the temporary caller. Do not copy a second header with a diverging declaration.</td>
+</tr>
+<tr>
+<td><code>make</code> reports “missing separator”</td>
+<td>Check that recipe indentation is a tab and that the Makefile was not saved with Markdown fences.</td>
+</tr>
+<tr>
+<td>Compilation warns about an argument type</td>
+<td>Fix the declaration or actual conversion; do not assume a successful link repairs it.</td>
+</tr>
+<tr>
+<td>Linking reports missing <code>dot_f32</code></td>
+<td>Check that the matching <code>dot.o</code> is an input to this configuration's link command.</td>
+</tr>
+<tr>
+<td>Linking reports sanitizer runtime symbols</td>
+<td>Compile and link through the same compiler driver with the sanitizer flags; do not reuse an uninstrumented or mismatched configuration casually.</td>
+</tr>
+<tr>
+<td>LLDB cannot show <code>sum</code></td>
+<td>Check the selected binary, <code>-O0 -g</code>, source location, and retained debug information; at function entry the assignment may not have executed.</td>
+</tr>
+<tr>
+<td>A memory report points into the reduction</td>
+<td>Inspect the caller's length and the remaining extent after any pointer offset, as well as the loop bound.</td>
+</tr>
+<tr>
+<td>The checks fail without a sanitizer report</td>
+<td>Trace products and accumulation; wrong but in-bounds arithmetic is still wrong.</td>
+</tr>
+<tr>
+<td>An edit appears to have no effect</td>
+<td>Check the executable path and Makefile prerequisites; clean after changing compilers or unrecorded command-line flags.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-code-state-carried-into-chapter-2">The code state carried into Chapter 2</h2>
+<p>The persistent result is <code>dot.h</code>, <code>dot.c</code>, <code>main.c</code>, and the Makefile under <code>examples/01-build/</code>. Their normal state computes 32, returns zero for the empty call, and passes all five checks in each build configuration. The directory remains independently runnable; it does not depend on future decoder infrastructure.</p>
+<p>You have an interface with explicit extent and lifetime assumptions, but the inputs still use fixed local storage. Chapter 2 will build a separate foundation program that acquires storage dynamically, borrows a view into it, rejects impossible sizes, and cleans up correctly after failure. The useful question carried forward is not merely “what address does this pointer contain?” but “who keeps that storage alive, how much is accessible, and what happens when construction fails?”</p>
+<h2 id="technical-references">Technical references</h2>
+<p>These references document the language and tool behavior used above. The complete runnable example is in this chapter; none of the links supplies missing program logic.</p>
+<p><strong>Apple tools:</strong> <a href="https://developer.apple.com/documentation/xcode/installing-the-command-line-tools/">Installing the command-line tools</a>; <a href="https://developer.apple.com/library/archive/technotes/tn2339/_index.html">Technical Note TN2339</a>, particularly installing and selecting developer tools. Historical paths and OS examples in TN2339 are not version requirements.</p>
+<p><strong>Compilation and diagnostics:</strong> <a href="https://clang.llvm.org/docs/CommandGuide/clang.html">Clang command guide</a>, “Description” and “Stage Selection Options”; <a href="https://clang.llvm.org/docs/DiagnosticsReference.html">diagnostic flag reference</a> for the named warning groups; <a href="https://clang.llvm.org/docs/UsersManual.html#controlling-floating-point-behavior">floating-point behavior</a> for <code>-ffast-math</code> assumptions.</p>
+<p><strong>C interfaces:</strong> GNU C manual, <a href="https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Pointer-Declarations.html">pointer declarations</a>, <a href="https://www.gnu.org/software/c-intro-and-ref/manual/html_node/const.html"><code>const</code></a>, <a href="https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Function-Parameter-Variables.html">function parameter variables</a>, and <a href="https://www.gnu.org/software/c-intro-and-ref/manual/c-intro-and-ref.html#Type-Size">type size</a>. These particular language rules are used in C17 mode; the manual also contains GNU extensions that this example does not require. The archived <a href="https://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_chapter/libc_12.html">GNU C library output reference</a> documents the standard <code>%zu</code> and floating-output conventions used here, not an Apple-library dependency.</p>
+<p><strong>Build descriptions:</strong> GNU make, <a href="https://www.gnu.org/software/make/manual/html_node/Rule-Syntax.html">rule syntax</a>, <a href="https://www.gnu.org/software/make/manual/html_node/Automatic-Variables.html">automatic variables</a>, and <a href="https://www.gnu.org/software/make/manual/make.html">the manual's phony-target and override sections</a>. The Makefile uses established features rather than requiring a recently introduced recipe syntax.</p>
+<p><strong>Runtime inspection:</strong> <a href="https://lldb.llvm.org/use/tutorial.html">LLDB tutorial</a>, “Setting Breakpoints,” “Controlling Your Program,” and “Examining Stack Frame State”; <a href="https://lldb.llvm.org/use/symbols.html">Symbols on macOS</a>; <a href="https://llvm.org/docs/CommandGuide/dsymutil.html">dsymutil description</a>; <a href="https://clang.llvm.org/docs/AddressSanitizer.html#usage">AddressSanitizer usage</a> and <a href="https://clang.llvm.org/docs/AddressSanitizer.html#symbolizing-the-reports">report symbolization</a>; <a href="https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#usage">UndefinedBehaviorSanitizer usage</a>.</p>
+</article>
+<nav class="pager" aria-label="Previous and next chapters"><a href="index.html"><small>Previous · Roadmap</small><span>Decoder Laboratory in C</span></a><a href="chapter-02.html"><small>Next · Chapter 2</small><span>Owned buffers, borrowed views, and failure cleanup</span></a></nav>
+<footer>Modern Language Models in C · Chapter 1</footer>
+</main>
+<aside class="page-toc" aria-label="In this chapter"><div class="toc-title">In this chapter</div><ul><li class="toc-h2"><a href="#establish-the-native-build-environment">Establish the native build environment</a></li><li class="toc-h2"><a href="#start-with-a-result-that-can-be-calculated-by-hand">Start with a result that can be calculated by hand</a></li><li class="toc-h2"><a href="#declare-the-memory-contract-before-writing-the-loop">Declare the memory contract before writing the loop</a></li><li class="toc-h2"><a href="#define-the-reduction-in-one-source-module">Define the reduction in one source module</a></li><li class="toc-h2"><a href="#give-the-kernel-a-complete-caller-and-executable-checks">Give the kernel a complete caller and executable checks</a></li><li class="toc-h2"><a href="#follow-the-source-through-compilation-and-linking">Follow the source through compilation and linking</a></li><li class="toc-h2"><a href="#make-builds-repeatable-without-mixing-configurations">Make builds repeatable without mixing configurations</a></li><li class="toc-h2"><a href="#stop-at-a-particular-accumulation-in-lldb">Stop at a particular accumulation in LLDB</a></li><li class="toc-h2"><a href="#separate-a-compiler-warning-from-a-linker-failure">Separate a compiler warning from a linker failure</a></li><li class="toc-h2"><a href="#let-a-sanitizer-catch-a-caller-that-lies-about-length">Let a sanitizer catch a caller that lies about length</a></li><li class="toc-h2"><a href="#make-one-small-change-then-predict-the-effect">Make one small change, then predict the effect</a></li><li class="toc-h2"><a href="#diagnose-the-smallest-failing-boundary">Diagnose the smallest failing boundary</a></li><li class="toc-h2"><a href="#the-code-state-carried-into-chapter-2">The code state carried into Chapter 2</a></li><li class="toc-h2"><a href="#technical-references">Technical references</a></li></ul></aside>
+</div></body></html>

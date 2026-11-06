@@ -1,0 +1,458 @@
+{
+  "title": "Modern Language Models in C",
+  "course_key": "gpt-c",
+  "repository": "https://github.com/25d-228/gpt-c",
+  "pages_url": "https://25d-228.github.io/gpt-c/",
+  "description": "A C decoder laboratory: explicit tensor layouts, manual gradients, small-model training, cached inference, and exact tiled attention.",
+  "complete": true,
+  "pages": [
+    {
+      "id": "roadmap",
+      "label": "Roadmap",
+      "title": "Decoder Laboratory in C",
+      "source": "roadmap.md",
+      "output": "index.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/1"
+    },
+    {
+      "id": "chapter-01",
+      "label": "Chapter 1",
+      "title": "Native C builds and a debuggable numerical program",
+      "source": "chapter-01.md",
+      "output": "chapter-01.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/2"
+    },
+    {
+      "id": "chapter-02",
+      "label": "Chapter 2",
+      "title": "Owned buffers, borrowed views, and failure cleanup",
+      "source": "chapter-02.md",
+      "output": "chapter-02.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/3"
+    },
+    {
+      "id": "chapter-03",
+      "label": "Chapter 3",
+      "title": "Floating-point arithmetic and numerical derivatives",
+      "source": "chapter-03.md",
+      "output": "chapter-03.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/4"
+    },
+    {
+      "id": "chapter-04",
+      "label": "Chapter 4",
+      "title": "Tensor layouts and reference matrix products",
+      "source": "chapter-04.md",
+      "output": "chapter-04.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/5"
+    },
+    {
+      "id": "chapter-05",
+      "label": "Chapter 5 · Part 1",
+      "title": "Embeddings, stable loss, and elementary backward passes",
+      "source": "chapter-05.md",
+      "output": "chapter-05.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/6"
+    },
+    {
+      "id": "chapter-05-part-2",
+      "label": "Chapter 5 · Part 2",
+      "title": "Checking gradients and numerical failures",
+      "source": "chapter-05-part-2.md",
+      "output": "chapter-05-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/7"
+    },
+    {
+      "id": "chapter-06",
+      "label": "Chapter 6 · Part 1",
+      "title": "Blocked C kernels and meaningful timing",
+      "source": "chapter-06.md",
+      "output": "chapter-06.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/8"
+    },
+    {
+      "id": "chapter-06-part-2",
+      "label": "Chapter 6 · Part 2",
+      "title": "Timing complete kernel calls",
+      "source": "chapter-06-part-2.md",
+      "output": "chapter-06-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/9"
+    },
+    {
+      "id": "chapter-07",
+      "label": "Chapter 7 · Part 1",
+      "title": "RMSNorm and residual gradient paths",
+      "source": "chapter-07.md",
+      "output": "chapter-07.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/10"
+    },
+    {
+      "id": "chapter-07-part-2",
+      "label": "Chapter 7 · Part 2",
+      "title": "Checking normalization and residual graphs",
+      "source": "chapter-07-part-2.md",
+      "output": "chapter-07-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/11"
+    },
+    {
+      "id": "chapter-08",
+      "label": "Chapter 8 · Part 1",
+      "title": "SwiGLU and the two-branch backward pass",
+      "source": "chapter-08.md",
+      "output": "chapter-08.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/12"
+    },
+    {
+      "id": "chapter-08-part-2",
+      "label": "Chapter 8 · Part 2",
+      "title": "Checking feed-forward branches and saved state",
+      "source": "chapter-08-part-2.md",
+      "output": "chapter-08-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/13"
+    },
+    {
+      "id": "chapter-09",
+      "label": "Chapter 9 · Part 1",
+      "title": "Rotary positions as explicit coordinate transformations",
+      "source": "chapter-09.md",
+      "output": "chapter-09.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/14"
+    },
+    {
+      "id": "chapter-09-part-2",
+      "label": "Chapter 9 · Part 2",
+      "title": "Checking coordinate conventions and absolute positions",
+      "source": "chapter-09-part-2.md",
+      "output": "chapter-09-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/15"
+    },
+    {
+      "id": "chapter-10",
+      "label": "Chapter 10 · Part 1",
+      "title": "Causal grouped-query attention, forward",
+      "source": "chapter-10.md",
+      "output": "chapter-10.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/16"
+    },
+    {
+      "id": "chapter-10-part-2",
+      "label": "Chapter 10 · Part 2",
+      "title": "Checking causal attention and shared heads",
+      "source": "chapter-10-part-2.md",
+      "output": "chapter-10-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/17"
+    },
+    {
+      "id": "chapter-11",
+      "label": "Chapter 11 · Part 1",
+      "title": "Attention backward and shared-head accumulation",
+      "source": "chapter-11.md",
+      "output": "chapter-11.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/18"
+    },
+    {
+      "id": "chapter-11-part-2",
+      "label": "Chapter 11 · Part 2",
+      "title": "Checking attention gradients and accumulation",
+      "source": "chapter-11-part-2.md",
+      "output": "chapter-11-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/19"
+    },
+    {
+      "id": "chapter-12",
+      "label": "Chapter 12 · Part 1",
+      "title": "Assemble and differentiate the complete decoder",
+      "source": "chapter-12.md",
+      "output": "chapter-12.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/20"
+    },
+    {
+      "id": "chapter-12-part-2",
+      "label": "Chapter 12 · Part 2",
+      "title": "Training tape and reverse scheduling",
+      "source": "chapter-12-part-2.md",
+      "output": "chapter-12-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/21"
+    },
+    {
+      "id": "chapter-12-part-3",
+      "label": "Chapter 12 · Part 3",
+      "title": "Checking the assembled model",
+      "source": "chapter-12-part-3.md",
+      "output": "chapter-12-part-3.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/22"
+    },
+    {
+      "id": "chapter-13",
+      "label": "Chapter 13 · Part 1",
+      "title": "Byte text, shifted targets, and bounded data preparation",
+      "source": "chapter-13.md",
+      "output": "chapter-13.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/23"
+    },
+    {
+      "id": "chapter-13-part-2",
+      "label": "Chapter 13 · Part 2",
+      "title": "Bounded preparation and end-to-end checks",
+      "source": "chapter-13-part-2.md",
+      "output": "chapter-13-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/24"
+    },
+    {
+      "id": "chapter-14",
+      "label": "Chapter 14 · Part 1",
+      "title": "AdamW, accumulation, and gradient clipping",
+      "source": "chapter-14.md",
+      "output": "chapter-14.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/25"
+    },
+    {
+      "id": "chapter-14-part-2",
+      "label": "Chapter 14 · Part 2",
+      "title": "Checking optimizer state and equivalent batches",
+      "source": "chapter-14-part-2.md",
+      "output": "chapter-14-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/26"
+    },
+    {
+      "id": "chapter-15",
+      "label": "Chapter 15 · Part 1",
+      "title": "Train, evaluate, checkpoint, and resume",
+      "source": "chapter-15.md",
+      "output": "chapter-15.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/27"
+    },
+    {
+      "id": "chapter-15-part-2",
+      "label": "Chapter 15 · Part 2",
+      "title": "Versioned checkpoints and coherent restoration",
+      "source": "chapter-15-part-2.md",
+      "output": "chapter-15-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/28"
+    },
+    {
+      "id": "chapter-15-part-3",
+      "label": "Chapter 15 · Part 3",
+      "title": "Running the training application",
+      "source": "chapter-15-part-3.md",
+      "output": "chapter-15-part-3.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/29"
+    },
+    {
+      "id": "chapter-15-part-4",
+      "label": "Chapter 15 · Part 4",
+      "title": "Checking continuation and failure recovery",
+      "source": "chapter-15-part-4.md",
+      "output": "chapter-15-part-4.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/30"
+    },
+    {
+      "id": "chapter-16",
+      "label": "Chapter 16 · Part 1",
+      "title": "Inference workspaces and token sampling",
+      "source": "chapter-16.md",
+      "output": "chapter-16.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/31"
+    },
+    {
+      "id": "chapter-16-part-2",
+      "label": "Chapter 16 · Part 2",
+      "title": "Weight-only loading and categorical selection",
+      "source": "chapter-16-part-2.md",
+      "output": "chapter-16-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/32"
+    },
+    {
+      "id": "chapter-16-part-3",
+      "label": "Chapter 16 · Part 3",
+      "title": "Full-prefix generation and executable checks",
+      "source": "chapter-16-part-3.md",
+      "output": "chapter-16-part-3.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/33"
+    },
+    {
+      "id": "chapter-17",
+      "label": "Chapter 17 · Part 1",
+      "title": "Prefill and incremental key/value caching",
+      "source": "chapter-17.md",
+      "output": "chapter-17.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/34"
+    },
+    {
+      "id": "chapter-17-part-2",
+      "label": "Chapter 17 · Part 2",
+      "title": "Computing and committing a cached step",
+      "source": "chapter-17-part-2.md",
+      "output": "chapter-17-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/35"
+    },
+    {
+      "id": "chapter-17-part-3",
+      "label": "Chapter 17 · Part 3",
+      "title": "Checking cache equivalence and failure recovery",
+      "source": "chapter-17-part-3.md",
+      "output": "chapter-17-part-3.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/36"
+    },
+    {
+      "id": "chapter-18",
+      "label": "Chapter 18 · Part 1",
+      "title": "Online normalization and tiled attention forward",
+      "source": "chapter-18.md",
+      "output": "chapter-18.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/37"
+    },
+    {
+      "id": "chapter-18-part-2",
+      "label": "Chapter 18 · Part 2",
+      "title": "Integrating bounded attention into inference",
+      "source": "chapter-18-part-2.md",
+      "output": "chapter-18-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/38"
+    },
+    {
+      "id": "chapter-18-part-3",
+      "label": "Chapter 18 · Part 3",
+      "title": "Checking tiled outputs, storage, and generation",
+      "source": "chapter-18-part-3.md",
+      "output": "chapter-18-part-3.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/39"
+    },
+    {
+      "id": "chapter-19",
+      "label": "Chapter 19 · Part 1",
+      "title": "Recomputed tiled backward without a quadratic tape",
+      "source": "chapter-19.md",
+      "output": "chapter-19.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/40"
+    },
+    {
+      "id": "chapter-19-part-2",
+      "label": "Chapter 19 · Part 2",
+      "title": "A linear training tape and paired dispatch",
+      "source": "chapter-19-part-2.md",
+      "output": "chapter-19-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/41"
+    },
+    {
+      "id": "chapter-19-part-3",
+      "label": "Chapter 19 · Part 3",
+      "title": "Training policy and versioned continuation",
+      "source": "chapter-19-part-3.md",
+      "output": "chapter-19-part-3.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/42"
+    },
+    {
+      "id": "chapter-19-part-4",
+      "label": "Chapter 19 · Part 4",
+      "title": "Checking tiled core and sublayer gradients",
+      "source": "chapter-19-part-4.md",
+      "output": "chapter-19-part-4.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/44"
+    },
+    {
+      "id": "chapter-19-part-5",
+      "label": "Chapter 19 · Part 5",
+      "title": "Whole-model, training, and memory checks",
+      "source": "chapter-19-part-5.md",
+      "output": "chapter-19-part-5.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/46"
+    },
+    {
+      "id": "chapter-20",
+      "label": "Chapter 20 · Part 1",
+      "title": "Import and validate pretrained weights",
+      "source": "chapter-20.md",
+      "output": "chapter-20.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/47"
+    },
+    {
+      "id": "chapter-20-part-2",
+      "label": "Chapter 20 · Part 2",
+      "title": "Bounded C loading and imported position limits",
+      "source": "chapter-20-part-2.md",
+      "output": "chapter-20-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/49"
+    },
+    {
+      "id": "chapter-20-part-3",
+      "label": "Chapter 20 · Part 3",
+      "title": "Executable import fixtures and the C inspection path",
+      "source": "chapter-20-part-3.md",
+      "output": "chapter-20-part-3.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/51"
+    },
+    {
+      "id": "chapter-20-part-4",
+      "label": "Chapter 20 · Part 4",
+      "title": "Cross-language validation and separate memory measurements",
+      "source": "chapter-20-part-4.md",
+      "output": "chapter-20-part-4.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/53"
+    },
+    {
+      "id": "chapter-21",
+      "label": "Chapter 21 · Part 1",
+      "title": "Tokenizer boundaries and pretrained reference agreement",
+      "source": "chapter-21.md",
+      "output": "chapter-21.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/55"
+    },
+    {
+      "id": "chapter-21-part-2",
+      "label": "Chapter 21 · Part 2",
+      "title": "Observing C execution and selecting vocabulary IDs",
+      "source": "chapter-21-part-2.md",
+      "output": "chapter-21-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/57"
+    },
+    {
+      "id": "chapter-21-part-3",
+      "label": "Chapter 21 · Part 3",
+      "title": "Independent eager equations and numerical disagreement",
+      "source": "chapter-21-part-3.md",
+      "output": "chapter-21-part-3.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/59"
+    },
+    {
+      "id": "chapter-21-part-4",
+      "label": "Chapter 21 · Part 4",
+      "title": "Executable checks and the real-asset workflow",
+      "source": "chapter-21-part-4.md",
+      "output": "chapter-21-part-4.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/61"
+    },
+    {
+      "id": "chapter-22",
+      "label": "Chapter 22 · Part 1",
+      "title": "End-to-end demonstration and measured tradeoffs",
+      "source": "chapter-22.md",
+      "output": "chapter-22.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/63"
+    },
+    {
+      "id": "chapter-22-part-2",
+      "label": "Chapter 22 · Part 2",
+      "title": "Measure forward/backward pairs and test the harness",
+      "source": "chapter-22-part-2.md",
+      "output": "chapter-22-part-2.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/65"
+    },
+    {
+      "id": "chapter-22-part-3",
+      "label": "Chapter 22 · Part 3",
+      "title": "A repeatable training, restart, and generation run",
+      "source": "chapter-22-part-3.md",
+      "output": "chapter-22-part-3.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/67"
+    },
+    {
+      "id": "chapter-22-part-4",
+      "label": "Chapter 22 · Part 4",
+      "title": "Interpret the measurements and complete the demonstration",
+      "source": "chapter-22-part-4.md",
+      "output": "chapter-22-part-4.html",
+      "issue_url": "https://github.com/25d-228/gpt-c/issues/69"
+    }
+  ]
+}
